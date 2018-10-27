@@ -1,10 +1,15 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import ipyvolume as ipv
 import numpy as np
 
 
 def viz_dimers(dimers, start_row=0, grid=True):
-    fig, ax = plt.subplots(figsize=(30, 20))
+    size_ratio = dimers.shape[1] / dimers.shape[0]
+    size = int(size_ratio * 3)
+    size = max(size, 10)
+
+    fig, ax = plt.subplots(figsize=(size, size))
     ax.imshow(dimers, interpolation='none', aspect='equal', cmap='tab10')
     if grid:
         ax.set_xticks(np.arange(start_row - 0.5, dimers.shape[1] - 0.5), minor=True)
@@ -16,20 +21,19 @@ def viz_dimers(dimers, start_row=0, grid=True):
     return fig
 
 
-def viz_dimer_positions(positions, size=5, use_ipv=True):
-    x, y, z = positions[['x', 'y', 'z']].values.astype('float').T
+def viz_dimer_positions(positions, size=5, color_feature_name=None):
+    # Only show visible dimers
+    selected_dimers = positions[positions['visible'] == True]
 
-    if use_ipv:
-        ipv.figure(height=400, width=800)
-        ipv.quickscatter(x, y, z, size=size, marker='sphere', color='#e4191b')
-        ipv.squarelim()
-        ipv.show()
+    x, y, z = selected_dimers[['x', 'y', 'z']].values.astype('float').T
+
+    if color_feature_name:
+        cmap = matplotlib.cm.get_cmap('tab20c')
+        color = cmap(selected_dimers[color_feature_name].values)
     else:
-        from mpl_toolkits.mplot3d import Axes3D
-        fig = plt.figure(figsize=(20, 20))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(x, y, z, c='#e4191b', marker='o')
+        color = '#e4191b'
 
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+    ipv.figure(height=800, width=1000)
+    ipv.scatter(x, y, z, size=size, marker='sphere', color=color)
+    ipv.squarelim()
+    ipv.show()
