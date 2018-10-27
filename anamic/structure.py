@@ -64,11 +64,10 @@ def get_dimer_positions(dimers):
         positions.append(datum)
     positions = pd.DataFrame(positions)
 
+    initial_row = positions[positions['row'] == 0]
     for i_row in range(1, n_rows):
 
-        initial_row = positions[positions['row'] == 0]
         current_row = initial_row.copy()
-
         current_row['row'] = i_row
 
         # Apply translation.
