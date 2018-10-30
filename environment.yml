@@ -1,18 +1,19 @@
 name: anamic
 channels:
-- conda-forge
+    - conda-forge
 
 dependencies:
-- python>=3.6
-- numpy
-- scipy
-- matplotlib
-- pandas
-- pytables
-- jupyter
-- jupyterlab
-- notebook
-- ipywidgets
-- tifffile
-- nose
-- pyyaml
+    - python>=3.6
+    - numpy
+    - scipy
+    - matplotlib
+    - pandas
+    - pytables
+    - jupyter
+    - jupyterlab
+    - notebook
+    - ipywidgets
+    - tifffile
+    - nose
+    - pyyaml
+    - ipyvolume

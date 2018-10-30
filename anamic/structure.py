@@ -38,7 +38,7 @@ def get_dimer_positions(dimers):
     long_dimer_distance = 8  # nm
 
     # Calculate the radius of the MT from n_pf
-    mt_radius = ((16.4 * n_pf + 20) / 2) / 10
+    mt_radius = ((16.4 * n_pf + 15) / 2) / 10
 
     # The dimer_factor is needed because we calculate theta from
     # dimer's center to dimer's center (not from monomer center).
