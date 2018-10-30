@@ -21,15 +21,21 @@ def viz_dimers(dimers, start_row=0, grid=True):
     return fig
 
 
-def viz_dimer_positions(positions, size=5, color_feature_name=None):
+def viz_dimer_positions(positions, size=5, cmap_name="tab20c", color_feature_name=None):
     # Only show visible dimers
     selected_dimers = positions[positions['visible'] == True]
 
     x, y, z = selected_dimers[['x', 'y', 'z']].values.astype('float').T
 
     if color_feature_name:
-        cmap = matplotlib.cm.get_cmap('tab20c')
-        color = cmap(selected_dimers[color_feature_name].values)
+        # TODO: that code should be much simpler...
+        cmap = matplotlib.cm.get_cmap(cmap_name)
+        categories = selected_dimers[color_feature_name].unique()
+        color_indices = cmap([i / len(categories) for i in categories])
+
+        color = np.zeros((len(selected_dimers[color_feature_name]), 4))
+        for color_index in range(len(categories)):
+            color[selected_dimers[color_feature_name] == categories[color_index]] = color_indices[color_index]
     else:
         color = '#e4191b'
 
