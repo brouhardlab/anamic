@@ -25,6 +25,17 @@ def generate_random_tapers(dimers, min_dimer, max_dimer):
     return dimers
 
 
+def generate_uniform_taper(dimers, taper_length_nm):
+    long_dimer_distance = 8  # nm
+    taper_length = int(np.round(taper_length_nm) / long_dimer_distance)
+    n_pf = dimers.shape[0]
+    missing_dimers = np.random.randint(0, taper_length, size=(n_pf,))
+    for pf, missing_n in zip(dimers, missing_dimers):
+        if missing_n > 0:
+            pf[-missing_n:] = 0
+    return dimers
+
+
 def get_dimer_positions(dimers):
     # Calculate the x, y and z positions of each dimers.
 
