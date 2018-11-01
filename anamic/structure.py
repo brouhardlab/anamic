@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import ipyvolume as ipv
 import pandas as pd
 import numpy as np
+import tqdm
 
 from . import transformations
 
@@ -26,6 +27,10 @@ def generate_random_tapers(dimers, min_dimer, max_dimer):
 
 
 def generate_uniform_taper(dimers, taper_length_nm):
+    
+    if taper_length_nm == 0:
+        return dimers
+    
     long_dimer_distance = 8  # nm
     taper_length = int(np.round(taper_length_nm) / long_dimer_distance)
     n_pf = dimers.shape[0]
@@ -36,7 +41,7 @@ def generate_uniform_taper(dimers, taper_length_nm):
     return dimers
 
 
-def get_dimer_positions(dimers):
+def get_dimer_positions(dimers, show_progress=False):
     # Calculate the x, y and z positions of each dimers.
 
     n_pf = dimers.shape[0]
@@ -93,7 +98,7 @@ def get_dimer_positions(dimers):
     # - a rotation on the Z axis
     i_helix = 0
     first_row = positions[positions['row'] == 0]
-    for i_row in range(1, n_rows):
+    for i_row in tqdm.trange(1, n_rows, leave=True, disable=not show_progress):
 
         current_row = first_row.copy()
         current_row['row'] = i_row
@@ -112,3 +117,17 @@ def get_dimer_positions(dimers):
         positions = positions.append(current_row, ignore_index=True)
         
     return positions
+
+
+def get_mt_tips(positions, coordinates_features=['x_pixel', 'y_pixel']):
+    # Get the position of the start and end of the microtubule
+    indexed_positions = positions.set_index('row')
+    indices = np.sort(indexed_positions.index.unique())
+
+    first_dimers = indexed_positions.loc[indices[0], coordinates_features]
+    x_start, y_start = first_dimers.mean()
+
+    last_dimers = indexed_positions.loc[indices[-1], coordinates_features]
+    x_end, y_end = last_dimers.mean()
+    
+    return x_start, x_end, y_start, y_end
