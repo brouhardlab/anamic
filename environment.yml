@@ -1,4 +1,3 @@
-name: anamic
 channels:
     - conda-forge
 
@@ -19,4 +18,3 @@ dependencies:
     - ipyvolume
     - tqdm
     - nodejs
-    - matplotlib
