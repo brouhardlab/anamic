@@ -18,3 +18,4 @@ dependencies:
     - pyyaml
     - ipyvolume
     - tqdm
+    - nodejs
