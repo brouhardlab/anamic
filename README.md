@@ -4,11 +4,11 @@
 
 Simulate, fit and analyze microtubules.
 
-# Dependencies
+## Dependencies
 
 - python > 3.6 (please stop using Python 2!)
 
-# Install
+## Install
 
 The best way is to clone the repository:
 
@@ -22,11 +22,11 @@ or to use as a library with `pip` (the notebooks won't be available):
 pip install https://github.com/hadim/anamic/archive/master.zip
 ```
 
-# License
+## License
 
 Under BSD license. See [LICENSE](LICENSE).
 
-# Authors
+## Authors
 
 - Claire Edrington <>
 - Hadrien Mary <hadrien.mary@gmail.com>
