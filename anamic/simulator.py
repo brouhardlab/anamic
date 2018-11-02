@@ -13,7 +13,7 @@ from . import transformations
 from . import imaging
 
 
-def mt_builder(n_pf, mt_length_nm, taper_length_nm):
+def dimers_builder(n_pf, mt_length_nm, taper_length_nm):
     long_dimer_distance = 8  # nm
 
     # Compute the number of rows
@@ -24,7 +24,7 @@ def mt_builder(n_pf, mt_length_nm, taper_length_nm):
 
     # Generate a tapered tip
     dimers = structure.generate_uniform_taper(dimers, taper_length_nm=taper_length_nm)
-    return MicrotubuleSimulator(dimers)
+    return dimers
 
 
 class MicrotubuleSimulator():
@@ -62,6 +62,9 @@ class MicrotubuleSimulator():
         self.parameters['psf_size'] = 135  # nm
         self.parameters['sigma_pixel'] = self.parameters['psf_size'] / self.parameters['pixel_size']
 
+        self.parameters['tip_start'] = None
+        self.parameters['tip_end'] = None
+
         self.parameters['signal_mean'] = 100
         self.parameters['signal_std'] = 40
         self.parameters['bg_mean'] = 50
@@ -70,6 +73,22 @@ class MicrotubuleSimulator():
 
         self.parameters['snr_line_width'] = 3  # pixel
         self.parameters['snr'] = np.nan
+
+    def build_all(self, apply_random_z_rotation=True, show_progress=True):
+        """
+        """
+
+        # Build the geometry
+        self.build_positions(apply_random_z_rotation=apply_random_z_rotation, show_progress=show_progress)
+        self.label()
+        self.project()
+        self.random_rotation_projected()
+
+        # Generate the image
+        self.discretize_position()
+        self.convolve()
+
+        self.calculate_snr()
 
     # Methods to build the microtubule geometry.
 
@@ -156,6 +175,12 @@ class MicrotubuleSimulator():
         pixel_shift = -1
         self.positions.loc[:, 'x_pixel'] = np.digitize(self.positions['x_proj_rotated'], x_bins) + pixel_shift
         self.positions.loc[:, 'y_pixel'] = np.digitize(self.positions['y_proj_rotated'], y_bins) + pixel_shift
+
+        # Save tips positions
+        x1, x2, y1, y2 = structure.get_mt_tips(self.positions, coordinates_features=['y_pixel', 'x_pixel'])
+        self.parameters['tip_start'] = (y1, x1)
+        self.parameters['tip_end'] = (y2, x2)
+
 
     def _generate_psf(self):
         """Generate a PSF from a Gaussian.
