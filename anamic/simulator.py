@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from . import structure
 from . import viz
 from . import transformations
+from . import imaging
 
 
 def mt_builder(n_pf, mt_length_nm, taper_length_nm):
@@ -50,8 +51,8 @@ class MicrotubuleSimulator():
 
         # Set default parameters
 
-        self.parameters['3d_z_rotation_angle'] = 0  # degrees
-        self.parameters['projected_rotation_angle'] = 0  # degrees
+        self.parameters['3d_z_rotation_angle'] = np.nan  # degrees
+        self.parameters['projected_rotation_angle'] = np.nan  # degrees
         self.parameters['labeling_ratio'] = 0.1  # from 0 to 1
 
         self.parameters['pixel_size'] = 110  # nm/pixel
@@ -66,6 +67,9 @@ class MicrotubuleSimulator():
         self.parameters['bg_mean'] = 50
         self.parameters['bg_std'] = 30
         self.parameters['noise_factor'] = 1
+
+        self.parameters['snr_line_width'] = 3  # pixel
+        self.parameters['snr'] = np.nan
 
     # Methods to build the microtubule geometry.
 
@@ -186,6 +190,28 @@ class MicrotubuleSimulator():
         # Create read noise
         read_noise = np.random.normal(loc=0, scale=self.parameters['bg_std'], size=self.image.shape) * self.parameters['noise_factor']
         self.image += read_noise
+
+    def calculate_snr(self):
+        """Calculate the SNR of the microtubule signal on the generated image.
+
+        The SNR is very sensitive to the line_width parameter.
+
+        Args:
+            line_width: float, used to select pixels belonging to the signal (pixel).
+        """
+
+        x1, x2, y1, y2 = structure.get_mt_tips(self.positions, coordinates_features=['y_pixel', 'x_pixel'])
+        p1 = np.array([x1, y1])
+        p2 = np.array([x2, y2])
+
+        corners = imaging.get_rectangle_from_middle_line(p1, p2, rectangle_width=self.parameters['snr_line_width'])
+        mask = imaging.get_mask_from_polygon(self.image, corners)
+
+        signal = self.image[mask]
+        background = self.image[~mask]
+
+        self.parameters['snr'] = imaging.compute_snr(signal.mean(), signal.std(), background.mean(), background.std())
+        return self.parameters['snr']
 
     # Methods to visualize positions or images.
 
