@@ -151,6 +151,10 @@ class MicrotubuleSimulator():
         Args:
             psf_size: float, in nm.
         """
+        
+        if self.psf and self.metadata['psf_size'] == psf_size:
+            return self.psf
+        
         self.metadata['psf_size'] = psf_size
         self.metadata['sigma_pixel'] = psf_size / self.metadata['pixel_size']
         kernel_size_pixel = int(self.metadata['sigma_pixel'] * 10)
@@ -208,18 +212,18 @@ class MicrotubuleSimulator():
             # Visualize all dimers
             selected_dimers = self.positions[(self.positions['visible'] == True)]
             viz.viz_2d_dimers_positions(ax, selected_dimers,
-                                               x_feature=y_feature, y_feature=x_feature,
-                                               color_feature=color_feature, marker_size=marker_size,
-                                               x_offset=x_offset)
+                                        x_feature=x_feature, y_feature=y_feature,
+                                        color_feature=color_feature, marker_size=marker_size,
+                                        x_offset=x_offset)
 
         if show_labeled:
             ax = axs[1] if show_all else ax
             # Visualize only labeled dimers
             selected_dimers = self.positions[(self.positions['visible'] == True) & (self.positions['labeled'] == True)]
             viz.viz_2d_dimers_positions(axs[1], selected_dimers,
-                                               x_feature=y_feature, y_feature=x_feature,
-                                               color_feature=color_feature, marker_size=marker_size,
-                                               x_offset=x_offset)
+                                        x_feature=x_feature, y_feature=y_feature,
+                                        color_feature=color_feature, marker_size=marker_size,
+                                        x_offset=x_offset)
         return fig
     
     def show_positions(self, color_feature_name='pf', size=0.4):
