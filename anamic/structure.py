@@ -27,10 +27,10 @@ def generate_random_tapers(dimers, min_dimer, max_dimer):
 
 
 def generate_uniform_taper(dimers, taper_length_nm):
-    
+
     if taper_length_nm == 0:
         return dimers
-    
+
     long_dimer_distance = 8  # nm
     taper_length = int(np.round(taper_length_nm) / long_dimer_distance)
     n_pf = dimers.shape[0]
@@ -115,7 +115,7 @@ def get_dimer_positions(dimers, show_progress=False):
 
         # Add new row's dimer positions to dataframe.
         positions = positions.append(current_row, ignore_index=True)
-        
+
     return positions
 
 
@@ -129,5 +129,5 @@ def get_mt_tips(positions, coordinates_features=['x_pixel', 'y_pixel']):
 
     last_dimers = indexed_positions.loc[indices[-1], coordinates_features]
     x_end, y_end = last_dimers.mean()
-    
+
     return x_start, x_end, y_start, y_end
