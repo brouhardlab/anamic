@@ -22,7 +22,7 @@ def get_rectangle_from_middle_line(p1, p2, rectangle_width):
         p2: list or array, x and y of point 2.
         rectangle_width: float, width of the rectangle.
     """
-    d = np.sqrt(np.sum((p1 - p2) ** 2))
+    norm = np.sqrt(np.sum((p1 - p2) ** 2))
 
     x1, y1 = p1
     x2, y2 = p2
@@ -35,7 +35,7 @@ def get_rectangle_from_middle_line(p1, p2, rectangle_width):
     n2 = np.array([dy, -dx])
 
     # Distance ratio
-    t = (rectangle_width / 2) / d
+    t = (rectangle_width / 2) / norm
 
     # Get corner points
     corner1 = (1 - t) * p1 + t * (p1 + n1)
