@@ -176,12 +176,12 @@ def tip_line_fit(point1, point2, image, length_spacing, line_thickness, width_sp
 
     fit_params = {}
     fit_params['mu'] = lmfit.Parameter('mu', value=x_profile[-1] / 2, min=0, max=x_profile[-1])
-    fit_params['sigma'] = lmfit.Parameter('sigma', value=100, vary=True, min=0, max=x_profile[-1])
-    fit_params['mt'] = lmfit.Parameter('mt', value=50, vary=True, min=0)
-    fit_params['bg'] = lmfit.Parameter('bg', value=50, vary=True, min=0)
+    fit_params['sigma'] = lmfit.Parameter('sigma', value=1, vary=True, min=0, max=x_profile[-1])
+    fit_params['mt'] = lmfit.Parameter('mt', value=1, vary=True, min=0)
+    fit_params['bg'] = lmfit.Parameter('bg', value=1, vary=True, min=0)
     fit_result = model.fit(y_profile.copy(), x=x_profile.copy(), **fit_params)
     
-    return x_profile, y_profile, fit_result.best_values, errorfunction
+    return x_profile, y_profile, fit_result, errorfunction
 
 
 def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpendicular_line_fit_args,
