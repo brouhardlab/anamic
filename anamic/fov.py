@@ -34,7 +34,7 @@ def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters)
     return parameters_list
 
 
-def create_fov(image_size_pixel, pixel_size, parameters_list, image_parameters):
+def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_parameters):
     """
     Args:
         parameters_list:
@@ -51,8 +51,15 @@ def create_fov(image_size_pixel, pixel_size, parameters_list, image_parameters):
     bg_std = pick_value(**image_parameters['bg_std'])
     noise_factor = pick_value(**image_parameters['noise_factor'])
     
-    # Pick from `parameters_list` a bunch of microtubule parameters
-    params_list = np.random.choice(parameters_list, n_mt)
+    params_list = []
+    for _ in range(n_mt):
+        params = {}
+        for k, v in microtubule_parameters.items():
+            if isinstance(v, dict):
+                params[k] = pick_value(**v)
+            else:
+                params[k] = v
+        params_list.append(params)
     
     # Create the microtubules (2d positions)
     mts = []
