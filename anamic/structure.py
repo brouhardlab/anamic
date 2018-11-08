@@ -34,6 +34,8 @@ def generate_uniform_taper(dimers, taper_length_nm):
     long_dimer_distance = 8  # nm
     taper_length = int(np.round(taper_length_nm) / long_dimer_distance)
     n_pf = dimers.shape[0]
+    if taper_length < 2:
+        return dimers
     missing_dimers = np.random.randint(0, taper_length, size=(n_pf,))
     for pf, missing_n in zip(dimers, missing_dimers):
         if missing_n > 0:
