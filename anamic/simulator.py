@@ -36,6 +36,9 @@ class MicrotubuleSimulator():
 
     long_dimer_distance = 8  # nm
 
+    enable_cached_positions = False
+    cached_positions = {}
+
     def __init__(self, dimers):
         self.dimers = dimers
 
@@ -101,7 +104,19 @@ class MicrotubuleSimulator():
             show_progress: boolean.
                 Show a progress bar.
         """
-        self.positions = structure.get_dimer_positions(self.dimers, show_progress=show_progress)
+
+        if MicrotubuleSimulator.enable_cached_positions:
+            n_pf = self.dimers.shape[0]
+            if self.dimers.shape[0] in MicrotubuleSimulator.cached_positions.keys():
+                if self.dimers.shape[1] <= MicrotubuleSimulator.cached_positions[self.dimers.shape[0]]['row'].max():
+                    positions_to_keep = MicrotubuleSimulator.cached_positions[self.dimers.shape[0]]['row'] < self.dimers.shape[1]
+                    self.positions = MicrotubuleSimulator.cached_positions[self.dimers.shape[0]][positions_to_keep].copy()
+
+        if self.positions is None:
+            self.positions = structure.get_dimer_positions(self.dimers, show_progress=show_progress)
+            n_pf = self.positions['pf'].max() + 1
+            MicrotubuleSimulator.cached_positions[n_pf] = self.positions.copy()
+
         if apply_random_z_rotation:
             self._random_3d_z_rotation()
 
