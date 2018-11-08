@@ -67,8 +67,8 @@ def create_fov(image_size_pixel, pixel_size, parameters_list, image_parameters):
         mts.append(ms)
     
     # Locate each microtubules on a 2D grid (translation)
-    x_centers = np.random.randint(0, image_size_nm, n_mt)
-    y_centers = np.random.randint(0, image_size_nm, n_mt)
+    x_centers = np.random.randint(0, image_size_nm + 1, n_mt)
+    y_centers = np.random.randint(0, image_size_nm + 1, n_mt)
     centers = np.array([x_centers, y_centers]).T
     for ms, center in zip(mts, centers):
         ms.positions[['x_proj_rotated', 'y_proj_rotated']] += center
