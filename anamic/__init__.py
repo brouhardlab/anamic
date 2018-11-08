@@ -6,6 +6,7 @@ from . import imaging
 from . import utils
 from . import geometry
 from . import fitter
+from . import fov
 
 __all__ = [structure, viz, transformations, simulator, imaging,
-           utils, geometry, fitter]
+           utils, geometry, fitter, fov]
