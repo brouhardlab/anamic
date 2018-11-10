@@ -1,6 +1,7 @@
 import tqdm
 import numpy as np
 from scipy import ndimage
+from skimage import morphology
 
 from . import simulator
 
@@ -64,6 +65,10 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
     # Create the microtubules (2d positions)
     mts = []
     for params in tqdm.tqdm_notebook(params_list, total=len(params_list), leave=False):
+        
+        # Taper length cannot be bigger than half the length of a microtubule.
+        params['taper_length_nm'] = min(0.5 * params['mt_length_nm'], params['taper_length_nm'])
+        
         dimers = simulator.dimers_builder(params['n_pf'], params['mt_length_nm'], params['taper_length_nm'])
         ms = simulator.MicrotubuleSimulator(dimers)
         ms.parameters.update(params)
@@ -90,8 +95,8 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
         y += selected_dimers['y_proj_rotated'].tolist()
     dimers = np.array([x, y])
     
-    x_bins = np.arange(0, image_size_nm, pixel_size)
-    y_bins = np.arange(0, image_size_nm, pixel_size)
+    x_bins = np.arange(0, image_size_nm + 1, pixel_size)
+    y_bins = np.arange(0, image_size_nm + 1, pixel_size)
     discrete_image, _, _ = np.histogram2d(dimers[0], dimers[1], bins=[x_bins, y_bins])
     
     # Convolve and generate the FOV
@@ -122,6 +127,8 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
         mask, _, _ = np.histogram2d(x, y, bins=[x_bins, y_bins])
         mask = mask > 0
         mask = mask.astype('uint8')
+        # Dilate mask
+        mask = morphology.dilation(mask, morphology.square(2))
         masks.append(mask)
     masks = np.array(masks)
     
