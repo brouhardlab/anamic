@@ -6,7 +6,7 @@ from skimage import morphology
 from . import simulator
 
 
-def pick_value(values, prob):
+def pick_value(values, prob=None):
     if isinstance(prob, list):
         return np.random.choice(values, p=prob)
     elif prob == 'poisson':
@@ -15,6 +15,10 @@ def pick_value(values, prob):
         return np.random.normal(**values)
     elif prob == 'uniform':
         return np.random.choice(values)
+    elif prob is None:
+        return values
+    else:
+        raise Exception(f"{values} and {prob} are not valid.")
     
     
 def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters):
@@ -35,7 +39,7 @@ def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters)
     return parameters_list
 
 
-def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_parameters):
+def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_parameters, return_positions=False):
     """
     Args:
         parameters_list:
@@ -132,4 +136,7 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
         masks.append(mask)
     masks = np.array(masks)
     
-    return image, masks
+    if return_positions:
+        return image, masks, mts
+    else:
+        return image, masks

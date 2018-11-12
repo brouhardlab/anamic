@@ -55,7 +55,8 @@ def line_profile(image, point1, point2,
                  length_spacing=0.1,
                  line_thickness=0,
                  width_spacing=0.1,
-                 normalized_intensities=True):
+                 normalized_intensities=True,
+                 threshold=None):
     """Get a line profile defined by an image and two points.
     
     Args:
@@ -92,6 +93,11 @@ def line_profile(image, point1, point2,
 
     # Define the x values of the profile so the unit is a pixel.
     x_profile = np.arange(0, y_profile.shape[0]) * length_spacing
+    
+    if threshold:
+        to_keep = y_profile > threshold
+        y_profile = y_profile[to_keep]
+        x_profile = x_profile[to_keep]
     
     return x_profile, y_profile
 
