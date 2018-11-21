@@ -1,19 +1,24 @@
 language: python
-python:
-  - "3.6"
+
+env:
+  - PYTHON_VERSION="3.6"
+  - PYTHON_VERSION="3.7"
 
 install:
   - sudo apt-get update
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
+  - echo ". $HOME/miniconda/etc/profile.d/conda.sh" >> $HOME/.bashrc
+  - source $HOME/.bashrc
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda env create -n anamic -f "binder/environment.yml"
+  - conda create -n anamic python=$PYTHON_VERSION
+  - conda activate anamic
+  - conda env update -f "binder/environment.yml"
 
 script:
-  - source activate anamic
+  - conda activate anamic
   - python setup.py install
   - nosetests
