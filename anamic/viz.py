@@ -1,6 +1,5 @@
 import matplotlib
 import matplotlib.pyplot as plt
-import ipyvolume as ipv
 import numpy as np
 
 from . import structure
@@ -24,6 +23,8 @@ def viz_dimers(dimers, start_row=0, grid=True):
 
 
 def viz_dimer_positions(positions, size=5, cmap_name="tab20c", color_feature_name=None):
+    import ipyvolume as ipv
+
     # Only show visible dimers
     selected_dimers = positions[positions['visible'] == True]
 
@@ -46,7 +47,7 @@ def viz_dimer_positions(positions, size=5, cmap_name="tab20c", color_feature_nam
     ipv.squarelim()
     ipv.show()
 
-    
+
 def viz_2d_dimers_positions(ax, dimers, x_feature, y_feature, color_feature, marker_size, x_offset=None, colormap='tab20c'):
     colors = dimers[color_feature].values
     ax.scatter(dimers[x_feature], dimers[y_feature], c=colors, s=marker_size, cmap=colormap)
@@ -57,17 +58,17 @@ def viz_2d_dimers_positions(ax, dimers, x_feature, y_feature, color_feature, mar
         ax.set_xlim(dimers[x_feature].min() - 5, dimers[x_feature].max() + 5)
     ax.set_ylim(dimers[y_feature].min() - 5, dimers[y_feature].max() + 5)
 
-    
+
 def imshow_colorbar(im, ax):
     from mpl_toolkits.axes_grid1 import make_axes_locatable
-    
+
     img = ax.imshow(im, interpolation='none', origin=[0, 0])
     ax.set_aspect('equal')
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.05)
     plt.colorbar(img, cax=cax)
-    
-    
+
+
 def show_tips(ax, positions, coordinates_features, marker_size=80):
     x_start, x_end, y_start, y_end = structure.get_mt_tips(positions, coordinates_features)
     ax.scatter([x_start], [y_start], color='cyan', label='Start', marker='x', s=marker_size)
