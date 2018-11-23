@@ -1,4 +1,5 @@
 # Anamic
+
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/hadim/anamic/master?urlpath=lab/tree/notebooks)
 [![Build Status](https://travis-ci.com/hadim/anamic.svg?branch=master)](https://travis-ci.com/hadim/anamic)
 
@@ -17,6 +18,12 @@ git clone https://github.com/hadim/anamic.git
 ```
 
 or to use as a library with `pip` (the notebooks won't be available):
+
+```
+pip install anamic
+```
+
+or to get the latest version:
 
 ```
 pip install https://github.com/hadim/anamic/archive/master.zip

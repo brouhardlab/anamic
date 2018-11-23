@@ -1,8 +1,16 @@
 language: python
 
-env:
-  - PYTHON_VERSION="3.6"
-  - PYTHON_VERSION="3.7"
+matrix:
+  fast_finish: true
+  include:
+    - language: python
+      os: linux
+      env:
+        - PYTHON_VERSION="3.6"
+    - language: python
+      os: linux
+      env:
+        - PYTHON_VERSION="3.7"
 
 install:
   - sudo apt-get update
@@ -12,13 +20,14 @@ install:
   - source $HOME/.bashrc
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels conda-forge
   - conda update -q conda
   - conda info -a
-  - conda create -n anamic python=$PYTHON_VERSION
-  - conda activate anamic
+  - conda create -n conda_env python=$PYTHON_VERSION
+  - conda activate conda_env
   - conda env update -f "binder/environment.yml"
 
 script:
-  - conda activate anamic
+  - conda activate conda_env
   - python setup.py install
-  - nosetests
+  - nosetests -v -s .
