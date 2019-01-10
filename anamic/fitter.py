@@ -102,7 +102,7 @@ def line_profile(image, point1, point2,
     return x_profile, y_profile
 
 
-def perpendicular_line_fit(lines, image, length_spacing, fit_threshold):
+def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuous_discard=False):
     """From a list of lines, fit each line to a Gaussian and record the `mu` value for each fit and compute the position
     in the image of this value.
     
@@ -111,6 +111,7 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold):
         image: 2D array.
         length_spacing: float, `get_thick_line()`.
         fit_threshold: float, fit with a `mu` stderr above this value will be discarded.
+        continuous_discard: bool, Discard all fit after the first one above `fit_threshold`.
     """
     
     def gaussian_wall(x, mu, sigma, mt, bg):
@@ -129,6 +130,7 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold):
     args['normalized_intensities'] = True
 
     fitted_line = []
+    errors = []
     best_fit = None
     for line in np.rollaxis(lines, -1):
         point1, point2 = line[:, 0], line[:, -1]
@@ -141,17 +143,25 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold):
         fit_params['bg'] = lmfit.Parameter('bg', value=50, vary=True, min=0)
         fit_result = model.fit(y_profile, x=x_profile, **fit_params)
 
-        # We discard fit with a bigger stderr than a threshold.
-        if fit_result.params['mu'].stderr and fit_result.params['mu'].stderr < mu_stderr_threshold:
-            # Distance between point 1 and the fitted center
-            d = fit_result.best_values['mu']
-            vec = point2 - point1
+        # Distance between point 1 and the fitted center
+        d = fit_result.best_values['mu']
+        vec = point2 - point1
 
-            # Get the point at a certain distance d from point1
-            line_center = geometry.get_point_from_vector(vec, point1, d)
-            fitted_line.append(line_center)
+        # Get the point at a certain distance d from point1
+        line_center = geometry.get_point_from_vector(vec, point1, d)
+        fitted_line.append(line_center)
+        errors.append(fit_result.params['mu'].stderr)
 
     fitted_line = np.array(fitted_line)
+    errors = np.array(errors)
+
+    if continuous_discard:
+        # Discard fitted lines after a fit above `fit_threshold`
+        discard_index = np.where(errors > fit_threshold)[0][0]
+        fitted_line = fitted_line[:discard_index]
+    else:
+        fitted_line = fitted_line[errors < fit_threshold]
+    
     return fitted_line
 
 
@@ -204,9 +214,9 @@ def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpe
         tip_fit_args:
     """
     lines = get_thick_line(tip_start, tip_end, **get_thick_line_args)
-    
-    fitted_line = perpendicular_line_fit(lines, image, **perpendicular_line_fit_args)
 
+    fitted_line = perpendicular_line_fit(lines, image, **perpendicular_line_fit_args)
+    
     # Now we fit the best line from those points
     a, b = np.polyfit(fitted_line[:, 1], fitted_line[:, 0], deg=1)
     new_point1 = np.array([a * fitted_line[0, 1] + b, fitted_line[0, 1]])
@@ -216,15 +226,14 @@ def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpe
     new_line = np.array([new_point1, new_point2])
     
     # Now we fit the microtubule using a line profile with a defined thickness.
-
-    # We define a new line we are going to use for the fitting process
-    line = np.array([tip_start, tip_end])
+    
     # Calculate the vector of the line and its norm
-    vec = tip_end - tip_start
+    vec = new_point2 - new_point1
+    
     # Get the coordinates of the points we'll use
     # to for line fitting.
-    start_point = geometry.get_point_from_vector(-vec, tip_end, offset_start)
-    end_point = geometry.get_point_from_vector(vec, tip_end, offset_end)
+    start_point = geometry.get_point_from_vector(-vec, new_point2, offset_start)
+    end_point = geometry.get_point_from_vector(vec, new_point2, offset_end)
     line_fit_tips = np.array([start_point, end_point])
     
     # Fit the tip
