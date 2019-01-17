@@ -150,11 +150,14 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
         # Get the point at a certain distance d from point1
         line_center = geometry.get_point_from_vector(vec, point1, d)
         fitted_line.append(line_center)
-        errors.append(fit_result.params['mu'].stderr)
+        if not fit_result.params['mu'].stderr:
+            errors.append(np.inf)
+        else:
+            errors.append(fit_result.params['mu'].stderr)
 
     fitted_line = np.array(fitted_line)
     errors = np.array(errors)
-
+    
     if continuous_discard:
         # Discard fitted lines after a fit above `fit_threshold`
         discard_index = np.where(errors > fit_threshold)[0][0]
