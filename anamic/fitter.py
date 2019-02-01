@@ -6,7 +6,7 @@ import scipy
 from . import geometry
 
 
-def get_thick_line(point1, point2, length_spacing=0.1, line_thickness=0, width_spacing=0.1):
+def get_thick_line(point1, point2, length_spacing=1, line_thickness=0, width_spacing=1):
     """Construct a list of points representing a discrete line. If `line_thickness` > 0 then
     the line is composed of multiple parallel line to each other with a width equal to
     `line_thickness`.
