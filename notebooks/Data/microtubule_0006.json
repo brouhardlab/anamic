@@ -1,0 +1,28 @@
+{
+  "3d_z_rotation_angle": 90.90008581858066,
+  "bg_mean": 500,
+  "bg_std": 24,
+  "date": "2018-11-07T17:35:28.753470",
+  "labeling_ratio": 0.1,
+  "n_pf": 15,
+  "noise_factor": 1.2,
+  "pixel_size": 110,
+  "projected_rotation_angle": 104.56937912598165,
+  "psf_size": 130,
+  "row": 750,
+  "sigma_pixel": 1.1818181818181819,
+  "signal_mean": 700,
+  "signal_std": 100,
+  "snr": 2.2221611897533946,
+  "snr_line_width": 3,
+  "tip_end": [
+    40.6,
+    40.733333333333334
+  ],
+  "tip_start": [
+    54.0,
+    93.0
+  ],
+  "x_offset": 4500,
+  "y_offset": 4500
+}
