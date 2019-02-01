@@ -243,4 +243,5 @@ def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpe
     line_fit_tips = np.array([start_point, end_point])
     
     # Fit the tip
-    return [line_fit_tips] + list(tip_line_fit(line_fit_tips[0], line_fit_tips[1], image, **tip_fit_args))
+    tip_line_fit_results = tip_line_fit(line_fit_tips[0], line_fit_tips[1], image, **tip_fit_args)
+    return [line_fit_tips] + list(tip_line_fit_results)
