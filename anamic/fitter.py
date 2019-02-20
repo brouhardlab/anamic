@@ -134,6 +134,7 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
     best_fit = None
     for line in np.rollaxis(lines, -1):
         point1, point2 = line[:, 0], line[:, -1]
+
         x_profile, y_profile = line_profile(image, point1, point2, **args)
 
         fit_params = {}
