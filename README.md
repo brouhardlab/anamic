@@ -5,7 +5,7 @@
 
 Simulate, fit and analyze microtubules.
 
-![]("doc/drawing.png")
+![](doc/drawing.png)
 
 ## Dependencies
 
