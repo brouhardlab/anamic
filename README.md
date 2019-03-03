@@ -5,6 +5,8 @@
 
 Simulate, fit and analyze microtubules.
 
+![]("doc/drawing.png")
+
 ## Dependencies
 
 - python > 3.6 (please stop using Python 2!)
