@@ -4,7 +4,7 @@ import numpy as np
 def get_point_from_vector(vec, point, distance):
     """Given a vector get the coordinate of the point
     at a certain distance from the input point.
-    
+
     Args:
         vec: array, vector.
         point: array, input point.
@@ -16,15 +16,15 @@ def get_point_from_vector(vec, point, distance):
 
 def discretize_line(line, spacing):
     """Return a list points located at equidistance on the input line.
-    
+
     The list will also include the input line points.
-    
+
     Args:
         line: array, shape=2x2
         spacing: float, the distance between each points.
-    
+
     """
-    
+
     vec = line[1] - line[0]
     norm = np.sqrt(np.sum(vec ** 2))
 
@@ -40,9 +40,9 @@ def discretize_line(line, spacing):
 
 
 def get_normal_points(vec, points, distance):
-    """From a vector and a point, get the point perpendicular 
+    """From a vector and a point, get the point perpendicular
     to the vector at a specific ditance from the input point.
-    
+
     Args:
         vec: array, vector.
         points: array, input point (can be a single point
@@ -63,5 +63,54 @@ def get_normal_points(vec, points, distance):
 
     points1 = (1 - t) * points + t * (points + n1)
     points2 = (1 - t) * points + t * (points + n2)
-    
+
     return np.array([points1.T, points2.T])
+
+
+def get_rectangle_from_middle_line(p1, p2, rectangle_width):
+    """Get the rectangle corner points from two points defining the line crossing the
+    rectangle in its middle.
+
+    Args:
+        p1: list or array, x and y of point 1.
+        p2: list or array, x and y of point 2.
+        rectangle_width: float, width of the rectangle.
+    """
+    norm = np.sqrt(np.sum((p1 - p2) ** 2))
+
+    x1, y1 = p1
+    x2, y2 = p2
+
+    dx = x2 - x1
+    dy = y2 - y1
+
+    # Get normal vectors
+    n1 = np.array([-dy, dx])
+    n2 = np.array([dy, -dx])
+
+    # Distance ratio
+    t = (rectangle_width / 2) / norm
+
+    # Get corner points
+    corner1 = (1 - t) * p1 + t * (p1 + n1)
+    corner2 = (1 - t) * p2 + t * (p2 + n2)
+    corner3 = (1 - t) * p1 + t * (p1 + n2)
+    corner4 = (1 - t) * p2 + t * (p2 + n1)
+    corners = np.array([corner1, corner3, corner2, corner4])
+    return corners
+
+
+def get_mask_from_polygon(image, polygon):
+    """Get a mask image of pixels inside the polygon.
+
+    Args:
+        image: Numpy array of dimension 2.
+        polygon: Numpy array of dimension 2 (2xN).
+    """
+    from matplotlib import path
+    xx, yy = np.meshgrid(np.arange(image.shape[1]), np.arange(image.shape[0]))
+    xx, yy = xx.flatten(), yy.flatten()
+    indices = np.vstack((xx, yy)).T
+    mask = path.Path(polygon).contains_points(indices)
+    mask = mask.reshape(image.shape)
+    return mask

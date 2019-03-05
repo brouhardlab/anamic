@@ -11,6 +11,7 @@ from . import structure
 from . import viz
 from . import transformations
 from . import imaging
+from . import geometry
 
 
 def dimers_builder(n_pf, mt_length_nm, taper_length_nm):
@@ -225,7 +226,7 @@ class MicrotubuleSimulator():
 
         # Create shot noise
         # TODO: is it worh it?
-        #image = np.random.poisson(image).astype('float')
+        # image = np.random.poisson(image).astype('float')
 
         # Create read noise
         read_noise = np.random.normal(loc=0, scale=self.parameters['bg_std'], size=self.image.shape) * self.parameters['noise_factor']
@@ -244,8 +245,8 @@ class MicrotubuleSimulator():
         p1 = np.array([x1, y1])
         p2 = np.array([x2, y2])
 
-        corners = imaging.get_rectangle_from_middle_line(p1, p2, rectangle_width=self.parameters['snr_line_width'])
-        mask = imaging.get_mask_from_polygon(self.image, corners)
+        corners = geometry.get_rectangle_from_middle_line(p1, p2, rectangle_width=self.parameters['snr_line_width'])
+        mask = geometry.get_mask_from_polygon(self.image, corners)
 
         signal = self.image[mask]
         background = self.image[~mask]
