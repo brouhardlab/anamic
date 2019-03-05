@@ -10,7 +10,8 @@ def get_pixel_size(fname):
     scales = list(filter(lambda x: x.startswith('scales'), description.split("\n")))
     if len(scales) >= 1:
         scales = scales[0]
-        return scales.split('=')[1].split(',')[0]
+        pixel_size = scales.split('=')[1].split(',')[0]
+        return float(pixel_size)
 
     # Second method
     raw_pixel_size, mul = tiff_obj.pages.pages[0].tags['YResolution'].value
