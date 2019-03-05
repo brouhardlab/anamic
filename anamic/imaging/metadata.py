@@ -8,7 +8,7 @@ def get_pixel_size(fname):
 
     # First method
     scales = list(filter(lambda x: x.startswith('scales'), description.split("\n")))
-    if len(scales) > 1:
+    if len(scales) >= 1:
         scales = scales[0]
         return scales.split('=')[1].split(',')[0]
 
