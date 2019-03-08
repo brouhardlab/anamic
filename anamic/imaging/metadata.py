@@ -7,8 +7,8 @@ def get_pixel_size(fname):
     description = tiff_obj.pages.pages[0].description
 
     # From LSM metadata
-    if tf.is_lsm:
-        pixel_size_m = tf.lsm_metadata['VoxelSizeX']
+    if tiff_obj.is_lsm:
+        pixel_size_m = tiff_obj.lsm_metadata['VoxelSizeX']
         return pixel_size_m / 1e-6
 
     # From ImageJ description
@@ -19,5 +19,8 @@ def get_pixel_size(fname):
         return float(pixel_size)
 
     # From ImageJ tags
-    raw_pixel_size, mul = tiff_obj.pages.pages[0].tags['YResolution'].value
-    return 1 / (raw_pixel_size) * mul
+    if 'YResolution' in tiff_obj.pages.pages[0].tags.keys():
+        raw_pixel_size, mul = tiff_obj.pages.pages[0].tags['YResolution'].value
+        return 1 / (raw_pixel_size) * mul
+
+    raise Exception("Cant't find the pixel size from the metadata.")
