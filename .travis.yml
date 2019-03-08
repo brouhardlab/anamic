@@ -1,25 +1,22 @@
-language: python
+language: c
+
+env:
+  - PYTHON_VERSION="3.6"
+  - PYTHON_VERSION="3.7"
+
+os:
+  - linux
+  - osx
 
 matrix:
   fast_finish: true
-  include:
-    - language: python
-      os: linux
-      env:
-        - PYTHON_VERSION="3.6"
-    - language: python
-      os: linux
-      env:
-        - PYTHON_VERSION="3.7"
 
 install:
-  - sudo apt-get update
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - echo ". $HOME/miniconda/etc/profile.d/conda.sh" >> $HOME/.bashrc
-  - source $HOME/.bashrc
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p "$HOME"/miniconda
+  - source "$HOME"/miniconda/etc/profile.d/conda.sh
+  - conda config --set always_yes yes --set changeps1 no --set auto_update_conda false
   - conda config --add channels conda-forge
   - conda update -q conda
   - conda info -a
