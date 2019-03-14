@@ -4,25 +4,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import tqdm
+from scipy.spatial.transform import Rotation
 
-from . import transformations
-
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).parents[1] / "data"
 
 
 def get_structure_parameters():
     struct = pd.read_csv(DATA_DIR / 'mt_structure.csv')
     struct = struct.set_index('n_pf', drop=True)
     return struct
-
-
-def generate_random_tapers(dimers, min_dimer, max_dimer):
-    n_pf = dimers.shape[0]
-    missing_dimers = np.random.randint(min_dimer, max_dimer, size=(n_pf,))
-    for pf, missing_n in zip(dimers, missing_dimers):
-        if missing_n > 0:
-            pf[-missing_n:] = 0
-    return dimers
 
 
 def generate_uniform_taper(dimers, taper_length_nm):
@@ -33,8 +23,10 @@ def generate_uniform_taper(dimers, taper_length_nm):
     long_dimer_distance = 8  # nm
     taper_length = int(np.round(taper_length_nm) / long_dimer_distance)
     n_pf = dimers.shape[0]
+
     if taper_length < 2:
         return dimers
+
     missing_dimers = np.random.randint(0, taper_length, size=(n_pf,))
     for pf, missing_n in zip(dimers, missing_dimers):
         if missing_n > 0:
@@ -68,55 +60,67 @@ def get_dimer_positions(dimers, show_progress=False):
     skew_angle = -1 * np.arcsin(0.25 * mt_radius * np.sin(0.5 * np.deg2rad(theta)))
 
     # Init the list of positions
-    positions = pd.DataFrame()
+    #positions = pd.DataFrame()
+    columns = ['row', 'pf', 'x', 'y', 'z', 'visible']
+    n_columns = len(columns)
+    positions = np.zeros((n_rows * n_pf, n_columns))
 
     # Calculate the position of the dimers
     # of the first row.
     i_row = 0
     for i_pf in range(n_pf):
-        datum = {}
+        datum = []
 
         # Row index
-        datum['row'] = i_row
+        positions[i_pf, 0] = i_row
 
         # Protofilament index
-        datum['pf'] = i_pf
+        positions[i_pf, 1] = i_pf
 
-        # Spatial coordinates
-        datum['x'] = mt_radius * np.sin(i_pf * np.deg2rad(params['hrot']))
-        datum['y'] = mt_radius * np.cos(i_pf * np.deg2rad(params['hrot']))
-        datum['z'] = i_pf * params['htrans']
+        # Spatial coordinates (x, y, z)
+        positions[i_pf, 2] = mt_radius * np.sin(i_pf * np.deg2rad(params['hrot']))
+        positions[i_pf, 3] = mt_radius * np.cos(i_pf * np.deg2rad(params['hrot']))
+        positions[i_pf, 4] = i_pf * params['htrans']
 
         # Is the dimer visible ?
-        datum['visible'] = dimers[i_pf, i_row] == 1
+        positions[i_pf, 5] = dimers[i_pf, i_row] == 1
 
-        # Store the positions in the dataframe
-        positions = positions.append(pd.Series(datum), ignore_index=True)
+
+    # Precompute shift for z coordinates.
+    shifts = np.arange(1, n_rows) * long_dimer_distance * np.cos(skew_angle)
+
+    # Precompute rotation angles.
+    rotations = np.deg2rad(np.arange(1, n_rows) * theta)
 
     # Starting from the first row, we calculcate
     # the rows of dimers above it by applying:
     # - a translation along the Z axis.
     # - a rotation on the Z axis
     i_helix = 0
-    first_row = positions[positions['row'] == 0]
+    first_row = positions[0:n_pf]
     for i_row in tqdm.trange(1, n_rows, leave=True, disable=not show_progress):
 
         current_row = first_row.copy()
-        current_row['row'] = i_row
 
-        # Apply translation.
-        shift = i_row * long_dimer_distance * np.cos(skew_angle)
-        current_row['z'] += shift
+        # Set the current row index
+        current_row[:, 0] = i_row
+
+        # Apply translation to z coordinates.
+        current_row[:, 4] += shifts[i_row - 1]
 
         # Apply rotation
-        rotation = np.deg2rad(i_row * theta)
-        Rz = transformations.rotation_matrix(rotation, [0, 0, 1])
-        current_row[['x', 'y', 'z']] = np.dot(current_row[['x', 'y', 'z']].values, Rz[:3, :3].T)
-        current_row['visible'] = dimers[:, i_row] == 1
+        rotation = rotations[i_row - 1]
+        Rz = Rotation.from_euler('z', rotation, degrees=False)
+        current_row[:, 2:5] = Rz.apply(current_row[:, 2:5])
+
+        # Set dimer's visiblity
+        current_row[:, 5] = dimers[:, i_row] == 1
 
         # Add new row's dimer positions to dataframe.
-        positions = positions.append(current_row, ignore_index=True)
+        array_index = i_row * n_pf
+        positions[array_index:array_index + n_pf] = current_row
 
+    positions = pd.DataFrame(positions, columns=columns)
     return positions
 
 

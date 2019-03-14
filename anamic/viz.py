@@ -2,7 +2,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-from . import structure
+from .simulator import structure
 
 
 def viz_dimers(dimers, start_row=0, grid=True):

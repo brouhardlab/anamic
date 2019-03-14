@@ -6,12 +6,12 @@ from scipy import signal
 from scipy import ndimage
 import tifffile
 import matplotlib.pyplot as plt
+from scipy.spatial.transform import Rotation
 
 from . import structure
-from . import viz
-from . import transformations
-from . import imaging
-from . import geometry
+from .. import viz
+from .. import imaging
+from .. import geometry
 
 
 def dimers_builder(n_pf, mt_length_nm, taper_length_nm):
@@ -128,8 +128,8 @@ class MicrotubuleSimulator():
         """
         self.parameters['3d_z_rotation_angle'] = np.random.randn() * 360
         rotation_angle = np.deg2rad(self.parameters['3d_z_rotation_angle'])
-        Rz = transformations.rotation_matrix(rotation_angle, [0, 0, 1])
-        self.positions[['x', 'y', 'z']] = np.dot(self.positions[['x', 'y', 'z']].values, Rz[:3, :3].T)
+        Rz = Rotation.from_euler('z', rotation_angle, degrees=False)
+        self.positions[['x', 'y', 'z']] = Rz.apply(self.positions[['x', 'y', 'z']].values)
 
     def label(self):
         """Apply a certain labeling ratio. This will add a column 'labeled' to `self.positions`.
@@ -150,11 +150,12 @@ class MicrotubuleSimulator():
         """
         self.parameters['projected_rotation_angle'] = np.random.randn() * 360
         random_angle = np.deg2rad(self.parameters['projected_rotation_angle'])
-        R = transformations.rotation_matrix(random_angle, [0, 0, 1])
+        Rz = Rotation.from_euler('z', random_angle, degrees=False)
+        R = Rz.as_dcm()[:2, :2].T
 
         self.positions['x_proj_rotated'] = np.nan
         self.positions['y_proj_rotated'] = np.nan
-        self.positions[['x_proj_rotated', 'y_proj_rotated']] = np.dot(self.positions[['x_proj', 'y_proj']], R[:2, :2].T)
+        self.positions[['x_proj_rotated', 'y_proj_rotated']] = np.dot(self.positions[['x_proj', 'y_proj']], R)
 
     # Methods to generate the image
 
@@ -176,8 +177,7 @@ class MicrotubuleSimulator():
         selected_dimers = self.positions[(self.positions['visible'] == True) & (self.positions['labeled'] == True)]
 
         # Bin dimers positions to a 2D grid (defined by pixel_size)
-        self.discrete_image, _, _ = np.histogram2d(selected_dimers['x_proj_rotated'], selected_dimers['y_proj_rotated'],
-                                                   bins=[x_bins, y_bins])
+        self.discrete_image, _, _ = np.histogram2d(selected_dimers['x_proj_rotated'], selected_dimers['y_proj_rotated'], bins=[x_bins, y_bins])
 
         # Keep the width > height consistant
         if self.discrete_image.shape[1] < self.discrete_image.shape[0]:

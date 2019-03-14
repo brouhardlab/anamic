@@ -10,6 +10,8 @@ def get_point_from_vector(vec, point, distance):
         point: array, input point.
         distance: float, the distance.
     """
+    vec = np.array(vec)
+    point = np.array(point)
     norm = np.sqrt(np.sum(vec ** 2))
     return point + (vec / norm) * distance
 
@@ -28,11 +30,11 @@ def discretize_line(line, spacing):
     vec = line[1] - line[0]
     norm = np.sqrt(np.sum(vec ** 2))
 
-    points = [line[0]]
+    points = []
 
     distances = np.arange(0, np.round(norm), spacing)
     for d in distances:
-        p = get_point_from_vector(vec, points[0], d)
+        p = get_point_from_vector(vec, line[0], d)
         points.append(p)
 
     points.append(line[1])
@@ -40,8 +42,8 @@ def discretize_line(line, spacing):
 
 
 def get_normal_points(vec, points, distance):
-    """From a vector and a point, get the point perpendicular
-    to the vector at a specific ditance from the input point.
+    """From a vector and a list of points, get the point perpendicular
+    to the vector at a specific distance from the input point.
 
     Args:
         vec: array, vector.
@@ -49,6 +51,9 @@ def get_normal_points(vec, points, distance):
             or an array of points).
         distance: float.
     """
+    vec = np.array(vec)
+    points = np.array(points)
+
     norm = np.sqrt(np.sum(vec ** 2))
 
     dx = vec[0]
@@ -76,6 +81,10 @@ def get_rectangle_from_middle_line(p1, p2, rectangle_width):
         p2: list or array, x and y of point 2.
         rectangle_width: float, width of the rectangle.
     """
+
+    p1 = np.array(p1)
+    p2 = np.array(p2)
+
     norm = np.sqrt(np.sum((p1 - p2) ** 2))
 
     x1, y1 = p1
