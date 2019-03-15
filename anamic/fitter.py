@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import ndimage
+from scipy import special
 import lmfit
-import scipy
 
 from . import geometry
 
@@ -131,7 +131,6 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
 
     fitted_line = []
     errors = []
-    best_fit = None
     for line in np.rollaxis(lines, -1):
         point1, point2 = line[:, 0], line[:, -1]
 
@@ -162,11 +161,11 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
     errors = np.array(errors)
 
     if continuous_discard:
-        # Discard fitted lines after a fit above `fit_threshold`
-        discard_index = np.where(errors > fit_threshold)[0][0]
+        # Discard fitted lines after a fit above `mu_stderr_threshold`
+        discard_index = np.where(errors > mu_stderr_threshold)[0][0]
         fitted_line = fitted_line[:discard_index]
     else:
-        fitted_line = fitted_line[errors < fit_threshold]
+        fitted_line = fitted_line[errors < mu_stderr_threshold]
 
     return fitted_line
 
@@ -192,7 +191,7 @@ def tip_line_fit(point1, point2, image, length_spacing, line_thickness, width_sp
     x_profile, y_profile = line_profile(image, point1, point2, **profile_parameters)
 
     def errorfunction(x, mu, sigma, mt, bg):
-        return bg + (0.5 * mt * scipy.special.erfc((x - mu) / (np.sqrt(2) * sigma)))
+        return bg + (0.5 * mt * special.erfc((x - mu) / (np.sqrt(2) * sigma)))
 
     model = lmfit.Model(errorfunction)
 
@@ -227,9 +226,6 @@ def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpe
     a, b = np.polyfit(fitted_line[:, 1], fitted_line[:, 0], deg=1)
     new_point1 = np.array([a * fitted_line[0, 1] + b, fitted_line[0, 1]])
     new_point2 = np.array([a * fitted_line[-1, 1] + b, fitted_line[-1, 1]])
-
-    # This the new line defining the microtubule
-    new_line = np.array([new_point1, new_point2])
 
     # Now we fit the microtubule using a line profile with a defined thickness.
 

@@ -3,7 +3,6 @@ from joblib import Parallel, delayed
 
 all_bar_funcs = {
     'tqdm': lambda args: lambda x: tqdm(x, **args),
-    'txt': lambda args: lambda x: text_progessbar(x, **args),
     'False': lambda args: iter,
     'None': lambda args: iter,
 }

@@ -28,3 +28,4 @@ script:
   - conda activate conda_env
   - python setup.py install
   - nosetests -v -s .
+  - # pylint .

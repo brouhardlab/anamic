@@ -22,11 +22,11 @@ def test_discretize_line():
     spacing = 0.3
 
     line = anamic.geometry.discretize_line(line, spacing)
-    true_line = np.array([[0.        , 0.        ],
+    true_line = np.array([[0, 0],
                           [0.21213203, 0.21213203],
                           [0.42426407, 0.42426407],
-                          [0.6363961 , 0.6363961 ],
-                          [1.        , 1.        ]])
+                          [0.6363961, 0.6363961 ],
+                          [1, 1]])
 
     npt.assert_almost_equal(line, true_line)
 

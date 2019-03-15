@@ -69,7 +69,6 @@ def get_dimer_positions(dimers, show_progress=False):
     # of the first row.
     i_row = 0
     for i_pf in range(n_pf):
-        datum = []
 
         # Row index
         positions[i_pf, 0] = i_row
@@ -96,7 +95,6 @@ def get_dimer_positions(dimers, show_progress=False):
     # the rows of dimers above it by applying:
     # - a translation along the Z axis.
     # - a rotation on the Z axis
-    i_helix = 0
     first_row = positions[0:n_pf]
     for i_row in tqdm.trange(1, n_rows, leave=True, disable=not show_progress):
 

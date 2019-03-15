@@ -301,11 +301,11 @@ class MicrotubuleSimulator():
                                        color_feature_name=color_feature_name)
 
     def show_psf(self):
-        fig, ax = plt.subplots(figsize=(5, 5))
+        _, ax = plt.subplots(figsize=(5, 5))
         viz.imshow_colorbar(self.psf, ax)
 
     def show_image(self, tip_marker_size=80):
-        fig, ax = plt.subplots(figsize=(8, 8))
+        _, ax = plt.subplots(figsize=(8, 8))
         viz.imshow_colorbar(self.image, ax)
         viz.show_tips(ax, self.positions, coordinates_features=['y_pixel', 'x_pixel'], marker_size=tip_marker_size)
 

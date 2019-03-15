@@ -19,13 +19,13 @@ def pick_value(values, prob=None):
         return values
     else:
         raise Exception(f"{values} and {prob} are not valid.")
-    
-    
+
+
 def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters):
     # Here we generate a list of parameters
     # to generate microtubules
     parameters_list = []
-    for i in tqdm.tqdm_notebook(range(n_microtubules_to_sample), total=n_microtubules_to_sample):
+    for _ in tqdm.tqdm_notebook(range(n_microtubules_to_sample), total=n_microtubules_to_sample):
         args = {}
         args.update(parameters.copy())
 
@@ -47,15 +47,15 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
         mask_rectangle_width:
     """
     image_size_nm = int(image_size_pixel * pixel_size)
-    
+
     # Choose parameters
     n_mt = pick_value(**image_parameters['n_mt'])
     signal_mean = pick_value(**image_parameters['signal_mean'])
-    signal_std = pick_value(**image_parameters['signal_std'])
+    # signal_std = pick_value(**image_parameters['signal_std'])
     bg_mean = pick_value(**image_parameters['bg_mean'])
     bg_std = pick_value(**image_parameters['bg_std'])
     noise_factor = pick_value(**image_parameters['noise_factor'])
-    
+
     params_list = []
     for _ in range(n_mt):
         params = {}
@@ -65,14 +65,14 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
             else:
                 params[k] = v
         params_list.append(params)
-    
+
     # Create the microtubules (2d positions)
     mts = []
     for params in tqdm.tqdm_notebook(params_list, total=len(params_list), leave=False):
-        
+
         # Taper length cannot be bigger than half the length of a microtubule.
         params['taper_length_nm'] = min(0.5 * params['mt_length_nm'], params['taper_length_nm'])
-        
+
         dimers = simulator.dimers_builder(params['n_pf'], params['mt_length_nm'], params['taper_length_nm'])
         ms = simulator.MicrotubuleSimulator(dimers)
         ms.parameters.update(params)
@@ -81,7 +81,7 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
         ms.project()
         ms.random_rotation_projected()
         mts.append(ms)
-    
+
     # Locate each microtubules on a 2D grid (translation)
     x_centers = np.random.randint(0, image_size_nm + 1, n_mt)
     y_centers = np.random.randint(0, image_size_nm + 1, n_mt)
@@ -89,7 +89,7 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
     for ms, center in zip(mts, centers):
         ms.positions[['x_proj_rotated', 'y_proj_rotated']] += center
         ms.positions[['x_pixel', 'y_pixel']] = ms.positions[['x_proj_rotated', 'y_proj_rotated']] / pixel_size
-        
+
     # Discretize all the dimer's positions
     x = []
     y = []
@@ -98,16 +98,16 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
         x += selected_dimers['x_proj_rotated'].tolist()
         y += selected_dimers['y_proj_rotated'].tolist()
     dimers = np.array([x, y])
-    
+
     x_bins = np.arange(0, image_size_nm + 1, pixel_size)
     y_bins = np.arange(0, image_size_nm + 1, pixel_size)
     discrete_image, _, _ = np.histogram2d(dimers[0], dimers[1], bins=[x_bins, y_bins])
-    
+
     # Convolve and generate the FOV
     # All mt objects are supposed to have the same PSF
     ms._generate_psf()
     psf = ms.psf
-    
+
     # Convolve the image with the PSF
     image = ndimage.convolve(discrete_image, psf, mode="constant")
 
@@ -135,7 +135,7 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
         mask = morphology.dilation(mask, morphology.square(2))
         masks.append(mask)
     masks = np.array(masks)
-    
+
     if return_positions:
         return image, masks, mts
     else:

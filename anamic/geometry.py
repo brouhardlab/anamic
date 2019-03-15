@@ -1,6 +1,4 @@
 import numpy as np
-
-
 def get_point_from_vector(vec, point, distance):
     """Given a vector get the coordinate of the point
     at a certain distance from the input point.
@@ -13,7 +11,7 @@ def get_point_from_vector(vec, point, distance):
     vec = np.array(vec)
     point = np.array(point)
     norm = np.sqrt(np.sum(vec ** 2))
-    return point + (vec / norm) * distance
+    return point + (vec / norm) *distance
 
 
 def discretize_line(line, spacing):
@@ -55,9 +53,6 @@ def get_normal_points(vec, points, distance):
     points = np.array(points)
 
     norm = np.sqrt(np.sum(vec ** 2))
-
-    dx = vec[0]
-    dy = vec[1]
 
     # Get the normal vectors
     n1 = np.array([-vec[1], vec[0]])

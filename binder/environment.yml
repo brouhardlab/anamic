@@ -21,3 +21,6 @@ dependencies:
     - joblib
     - lmfit
     - scikit-image
+    - coverage
+    - pylint
+    - pep8
