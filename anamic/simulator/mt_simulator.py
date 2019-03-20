@@ -206,6 +206,7 @@ class MicrotubuleSimulator():
         """
         self.parameters['sigma_pixel'] = self.parameters['psf_size'] / self.parameters['pixel_size']
         kernel_size_pixel = int(self.parameters['sigma_pixel'] * 10)
+        #pylint: disable:no-member
         gaussian_kernel_1d = signal.gaussian(kernel_size_pixel, std=self.parameters['sigma_pixel'])
         gaussian_kernel_1d = gaussian_kernel_1d.reshape(kernel_size_pixel, 1)
         self.psf = np.outer(gaussian_kernel_1d, gaussian_kernel_1d)

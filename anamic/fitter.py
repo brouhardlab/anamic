@@ -191,6 +191,7 @@ def tip_line_fit(point1, point2, image, length_spacing, line_thickness, width_sp
     x_profile, y_profile = line_profile(image, point1, point2, **profile_parameters)
 
     def errorfunction(x, mu, sigma, mt, bg):
+        #pylint: disable:no-member
         return bg + (0.5 * mt * special.erfc((x - mu) / (np.sqrt(2) * sigma)))
 
     model = lmfit.Model(errorfunction)

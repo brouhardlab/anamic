@@ -17,8 +17,8 @@ def pick_value(values, prob=None):
         return np.random.choice(values)
     elif prob is None:
         return values
-    else:
-        raise Exception(f"{values} and {prob} are not valid.")
+
+    raise Exception(f"{values} and {prob} are not valid.")
 
 
 def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters):
