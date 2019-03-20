@@ -1,6 +1,6 @@
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 
 from .simulator import structure
 
@@ -26,7 +26,7 @@ def viz_dimer_positions(positions, size=5, cmap_name="tab20c", color_feature_nam
     import ipyvolume as ipv
 
     # Only show visible dimers
-    selected_dimers = positions[positions['visible'] == True]
+    selected_dimers = positions[positions['visible'] is True]
 
     x, y, z = selected_dimers[['x', 'y', 'z']].values.astype('float').T
 
@@ -37,7 +37,7 @@ def viz_dimer_positions(positions, size=5, cmap_name="tab20c", color_feature_nam
         color_indices = cmap([i / len(categories) for i in categories])
 
         color = np.zeros((len(selected_dimers[color_feature_name]), 4))
-        for color_index in range(len(categories)):
+        for color_index in enumerate(categories):
             color[selected_dimers[color_feature_name] == categories[color_index]] = color_indices[color_index]
     else:
         color = '#e4191b'

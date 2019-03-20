@@ -1,24 +1,20 @@
 from tqdm import tqdm_notebook as tqdm
-from joblib import Parallel, delayed
+from joblib import Parallel
 
-all_bar_funcs = {
-    'tqdm': lambda args: lambda x: tqdm(x, **args),
-    'False': lambda args: iter,
-    'None': lambda args: iter,
-}
 
 def parallel_executor(use_bar='tqdm', **joblib_args):
-    def aprun(bar=use_bar, **tq_args):
+    def aprun(bar_name=use_bar, **tq_args):
         all_bar_funcs = {
+            #pylint: disable-msg=undefined-variable
             'tqdm': lambda args: lambda x: tqdm(x, **args),
             'False': lambda args: iter,
             'None': lambda args: iter,
         }
         def tmp(op_iter):
-            if str(bar) in all_bar_funcs.keys():
-                bar_func = all_bar_funcs[str(bar)](tq_args)
+            if str(bar_name) in all_bar_funcs.keys():
+                bar_func = all_bar_funcs[str(bar_name)](tq_args)
             else:
-                raise ValueError("Value %s not supported as bar type"%bar)
+                raise ValueError(f"Value {bar_name} not supported as bar type")
             return Parallel(**joblib_args)(bar_func(op_iter))
         return tmp
     return aprun

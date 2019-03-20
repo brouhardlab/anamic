@@ -39,6 +39,7 @@ def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters)
     return parameters_list
 
 
+#pylint: disable=too-many-statements
 def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_parameters, return_positions=False):
     """
     Args:
@@ -94,7 +95,7 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
     x = []
     y = []
     for ms in mts:
-        selected_dimers = ms.positions[(ms.positions['visible'] == True) & (ms.positions['labeled'] == True)]
+        selected_dimers = ms.positions[(ms.positions['visible'] is True) and (ms.positions['labeled'] is True)]
         x += selected_dimers['x_proj_rotated'].tolist()
         y += selected_dimers['y_proj_rotated'].tolist()
     dimers = np.array([x, y])
@@ -105,7 +106,7 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
 
     # Convolve and generate the FOV
     # All mt objects are supposed to have the same PSF
-    ms._generate_psf()
+    ms.generate_psf()
     psf = ms.psf
 
     # Convolve the image with the PSF
@@ -138,5 +139,5 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
 
     if return_positions:
         return image, masks, mts
-    else:
-        return image, masks
+
+    return image, masks

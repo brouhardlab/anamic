@@ -117,7 +117,7 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
     def gaussian_wall(x, mu, sigma, mt, bg):
         return mt * np.exp(-0.5 * ((x - mu) / sigma) ** 2) + bg
 
-    model= lmfit.Model(gaussian_wall)
+    model = lmfit.Model(gaussian_wall)
 
     # This threshold is sensitive to `length_spacing`
     # TODO: I am not sure this is the best condition

@@ -1,9 +1,8 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
 import tqdm
+import pandas as pd
 from scipy.spatial.transform import Rotation
 
 DATA_DIR = Path(__file__).parents[1] / "data"
@@ -89,6 +88,7 @@ def get_dimer_positions(dimers, show_progress=False):
     shifts = np.arange(1, n_rows) * long_dimer_distance * np.cos(skew_angle)
 
     # Precompute rotation angles.
+    #pylint: disable=assignment-from-no-return
     rotations = np.deg2rad(np.arange(1, n_rows) * theta)
 
     # Starting from the first row, we calculcate
@@ -122,7 +122,11 @@ def get_dimer_positions(dimers, show_progress=False):
     return positions
 
 
-def get_mt_tips(positions, coordinates_features=['x_pixel', 'y_pixel']):
+def get_mt_tips(positions, coordinates_features=None):
+
+    if coordinates_features is None:
+        coordinates_features = ['x_pixel', 'y_pixel']
+
     # Get the position of the start and end of the microtubule
     indexed_positions = positions.set_index('row')
     indices = np.sort(indexed_positions.index.unique())

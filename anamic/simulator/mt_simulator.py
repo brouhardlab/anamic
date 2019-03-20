@@ -4,9 +4,9 @@ import datetime
 import numpy as np
 from scipy import signal
 from scipy import ndimage
+from scipy.spatial.transform import Rotation
 import tifffile
 import matplotlib.pyplot as plt
-from scipy.spatial.transform import Rotation
 
 from . import structure
 from .. import viz
@@ -46,6 +46,7 @@ class MicrotubuleSimulator():
         self.positions = None
         self.discrete_image = None
         self.psf = None
+        self.image = None
 
         self.parameters = {}
 
@@ -79,8 +80,6 @@ class MicrotubuleSimulator():
         self.parameters['snr'] = np.nan
 
     def build_all(self, apply_random_z_rotation=True, show_progress=True):
-        """
-        """
 
         # Build the geometry
         self.build_positions(apply_random_z_rotation=apply_random_z_rotation, show_progress=show_progress)
@@ -127,6 +126,7 @@ class MicrotubuleSimulator():
         This is to avoid having the seam always at the same location.
         """
         self.parameters['3d_z_rotation_angle'] = np.random.randn() * 360
+        #pylint: disable=assignment-from-no-return
         rotation_angle = np.deg2rad(self.parameters['3d_z_rotation_angle'])
         Rz = Rotation.from_euler('z', rotation_angle, degrees=False)
         self.positions[['x', 'y', 'z']] = Rz.apply(self.positions[['x', 'y', 'z']].values)
@@ -149,6 +149,7 @@ class MicrotubuleSimulator():
         'x_proj_rotated' and 'y_proj_rotated'.
         """
         self.parameters['projected_rotation_angle'] = np.random.randn() * 360
+        #pylint: disable=assignment-from-no-return
         random_angle = np.deg2rad(self.parameters['projected_rotation_angle'])
         Rz = Rotation.from_euler('z', random_angle, degrees=False)
         R = Rz.as_dcm()[:2, :2].T
@@ -159,7 +160,7 @@ class MicrotubuleSimulator():
 
     # Methods to generate the image
 
-    def discretize_position(self, pixel_size=110, x_offset=800, y_offset=800):
+    def discretize_position(self):
         """Discretize dimer positions on an image. Image is stored in `self.discrete_image`.
         `self.positions` will contains two new columns: `x_pixel` and `y_pixel`.
         """
@@ -174,10 +175,12 @@ class MicrotubuleSimulator():
         y_bins = np.arange(y_min - self.parameters['y_offset'], y_max + self.parameters['y_offset'], self.parameters['pixel_size'])
 
         # Select visible and labeled dimers
-        selected_dimers = self.positions[(self.positions['visible'] == True) & (self.positions['labeled'] == True)]
+        selected_dimers = self.positions[(self.positions['visible'] is True) and (self.positions['labeled'] is True)]
 
         # Bin dimers positions to a 2D grid (defined by pixel_size)
-        self.discrete_image, _, _ = np.histogram2d(selected_dimers['x_proj_rotated'], selected_dimers['y_proj_rotated'], bins=[x_bins, y_bins])
+        self.discrete_image, _, _ = np.histogram2d(selected_dimers['x_proj_rotated'],
+                                                   selected_dimers['y_proj_rotated'],
+                                                   bins=[x_bins, y_bins])
 
         # Keep the width > height consistant
         if self.discrete_image.shape[1] < self.discrete_image.shape[0]:
@@ -198,7 +201,7 @@ class MicrotubuleSimulator():
         self.parameters['tip_end'] = (y2, x2)
 
 
-    def _generate_psf(self):
+    def generate_psf(self):
         """Generate a PSF from a Gaussian.
         """
         self.parameters['sigma_pixel'] = self.parameters['psf_size'] / self.parameters['pixel_size']
@@ -213,7 +216,7 @@ class MicrotubuleSimulator():
         """
 
         # Get the PSF
-        self._generate_psf()
+        self.generate_psf()
 
         # Convolve the image with the PSF
         self.image = ndimage.convolve(self.discrete_image, self.psf, mode="constant")
@@ -248,10 +251,13 @@ class MicrotubuleSimulator():
         corners = geometry.get_rectangle_from_middle_line(p1, p2, rectangle_width=self.parameters['snr_line_width'])
         mask = geometry.get_mask_from_polygon(self.image, corners)
 
-        signal = self.image[mask]
-        background = self.image[~mask]
+        image_signal = self.image[mask]
+        image_background = self.image[~mask]
 
-        self.parameters['snr'] = imaging.compute_snr(signal.mean(), signal.std(), background.mean(), background.std())
+        self.parameters['snr'] = imaging.compute_snr(image_signal.mean(),
+                                                     image_signal.std(),
+                                                     image_background.mean(),
+                                                     image_background.std())
         return self.parameters['snr']
 
     # Methods to visualize positions or images.
@@ -279,7 +285,7 @@ class MicrotubuleSimulator():
         if show_all:
             ax = axs[0] if show_labeled else ax
             # Visualize all dimers
-            selected_dimers = self.positions[(self.positions['visible'] == True)]
+            selected_dimers = self.positions[(self.positions['visible'] is True)]
             viz.viz_2d_dimers_positions(ax, selected_dimers,
                                         x_feature=x_feature, y_feature=y_feature,
                                         color_feature=color_feature, marker_size=marker_size,
@@ -288,7 +294,7 @@ class MicrotubuleSimulator():
         if show_labeled:
             ax = axs[1] if show_all else ax
             # Visualize only labeled dimers
-            selected_dimers = self.positions[(self.positions['visible'] == True) & (self.positions['labeled'] == True)]
+            selected_dimers = self.positions[(self.positions['visible'] is True) and (self.positions['labeled'] is True)]
             viz.viz_2d_dimers_positions(axs[1], selected_dimers,
                                         x_feature=x_feature, y_feature=y_feature,
                                         color_feature=color_feature, marker_size=marker_size,
