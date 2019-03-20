@@ -1,0 +1,31 @@
+[MESSAGES CONTROL]
+
+disable=import-error,too-many-arguments,too-many-locals,missing-docstring
+
+[BASIC]
+
+# Regular expression matching correct variable names. Overrides variable-
+# naming-style.
+variable-rgx=[A-Za-z_][a-z0-9_]{0,30}$
+
+# Regular expression matching correct inline iteration names. Overrides
+# inlinevar-naming-style.
+inlinevar-rgx=[A-Za-z_][a-z0-9_]{0,30}$
+
+# Regular expression matching correct argument names. Overrides argument-
+# naming-style.
+argument-rgx=[A-Za-z_][a-z0-9_]{0,30}$
+
+# Regular expression matching correct attribute names. Overrides attr-naming-
+# style.
+attr-rgx=[A-Za-z_][a-z0-9_]{0,30}$
+
+[FORMAT]
+
+# Maximum number of characters on a single line.
+max-line-length=140
+
+[MISCELLANEOUS]
+
+# List of note tags to take in consideration, separated by a comma.
+notes=

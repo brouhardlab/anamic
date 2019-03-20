@@ -27,4 +27,5 @@ install:
 script:
   - conda activate conda_env
   - python setup.py install
-  - nosetests -v -s .
+  - nosetests -v -s --exe anamic/tests/
+  - pylint anamic/
