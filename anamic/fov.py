@@ -7,6 +7,7 @@ from . import simulator
 
 
 def pick_value(values, prob=None):
+    #pylint: disable=no-else-return
     if isinstance(prob, list):
         return np.random.choice(values, p=prob)
     elif prob == 'poisson':
@@ -17,8 +18,8 @@ def pick_value(values, prob=None):
         return np.random.choice(values)
     elif prob is None:
         return values
-
-    raise Exception(f"{values} and {prob} are not valid.")
+    else:
+        raise Exception(f"{values} and {prob} are not valid.")
 
 
 def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters):
