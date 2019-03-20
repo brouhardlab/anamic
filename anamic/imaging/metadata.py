@@ -8,7 +8,7 @@ def get_pixel_size(fname):
 
     # From LSM metadata
     if tiff_obj.is_lsm:
-        #pylint: disable:unsubscriptable-object
+        #pylint: disable=unsubscriptable-object
         pixel_size_m = tiff_obj.lsm_metadata['VoxelSizeX']
         return pixel_size_m / 1e-6
 
