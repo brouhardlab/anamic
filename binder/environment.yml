@@ -24,3 +24,6 @@ dependencies:
     - coverage
     - pylint
     - pep8
+    - pyvista
+    - bokeh
+    - panel
