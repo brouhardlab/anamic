@@ -13,7 +13,6 @@ dependencies:
     - notebook
     - ipywidgets
     - tifffile
-    - nose
     - pyyaml
     - ipyvolume
     - tqdm
@@ -21,9 +20,10 @@ dependencies:
     - joblib
     - lmfit
     - scikit-image
-    - coverage
-    - pylint
-    - pep8
     - pyvista
     - bokeh
     - panel
+    - pytest
+    - flake8
+    - pylint
+    - autopep8
