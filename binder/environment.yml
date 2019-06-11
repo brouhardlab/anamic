@@ -23,6 +23,7 @@ dependencies:
     - pyvista
     - bokeh
     - panel
+    - colorcet
     - pytest
     - flake8
     - pylint
