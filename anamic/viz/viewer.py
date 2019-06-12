@@ -116,7 +116,7 @@ class ImageViewer(param.Parameterized):
   def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
     super().__init__(**kwargs)
 
-    self.image = reorder_image_dimensions(image, dimension_order)
+    self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
 
     self._setup_logger()
     self._log_lines = []
@@ -161,6 +161,7 @@ class ImageViewer(param.Parameterized):
     self.param_widgets['color_mode_param'] = pn.widgets.RadioButtonGroup
 
     # Create the Bokeh figure.
+    self.fig = None
     self._create_figure()
     self._update_image_view()
 
@@ -212,6 +213,10 @@ class ImageViewer(param.Parameterized):
     figure_args['active_scroll'] = "wheel_zoom"
     figure_args['match_aspect'] = True
 
+    if self.fig:
+      figure_args['x_range'] = self.fig.x_range
+      figure_args['y_range'] = self.fig.y_range
+
     self.fig = plotting.figure(**figure_args)
     self.fig.toolbar.logo = None
 
@@ -231,8 +236,8 @@ class ImageViewer(param.Parameterized):
       self.fig.image(color_mapper=self.color_mapper, **image_args)
 
       # Add colorbar
-      color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
-      self.fig.add_layout(color_bar, 'right')
+      #color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
+      #self.fig.add_layout(color_bar, 'right')
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
