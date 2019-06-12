@@ -6,11 +6,13 @@ import panel as pn
 import param
 import bokeh as bk
 from bokeh import plotting
+import skimage
+import matplotlib
 
 from anamic.utils import css_dict_to_string
 
 
-def reorder_image_dimensions(image, dimension_order=None):
+def reorder_image_dimensions(self, image, dimension_order=None):
   """After wrapping the image in a new view, the shape of the image
   is modified to match the dimension order of 'TCZXY'.
 
@@ -56,6 +58,36 @@ def reorder_image_dimensions(image, dimension_order=None):
   return image
 
 
+def create_composite(images, colors):
+  """Given a stack of 2D images and a list of colors. Create a composite
+  RGB image.
+
+  Args:
+      images: array, a stack of 2D Numpy images.
+      colors: list, a list of colors. The length of the list
+        must be the same as `images`.
+
+  Returns:
+      composite, an RGB image.
+  """
+
+  if images.shape[0] != len(colors):
+    mess = "The size of `colors` is different than the number of dimensions of `images`"
+    raise ValueError(mess)
+
+  colored_images = []
+  for color, im in zip(colors, images):
+    rgb = list(matplotlib.colors.to_rgb(color))
+    im = skimage.img_as_float(im)
+    im = skimage.color.gray2rgb(im)
+    im *= rgb
+    #im = skimage.color.rgb2hsv(im)
+    colored_images.append(im)
+  colored_images = np.array(colored_images)
+  composite = np.sum(colored_images, axis=0)
+  return composite
+
+
 # pylint: disable=too-many-instance-attributes
 class ImageViewer(param.Parameterized):
   """An image viewer.
@@ -69,6 +101,7 @@ class ImageViewer(param.Parameterized):
 
   # pylint: disable=no-member
   PALETTE_LIST = bk.palettes.__palettes__
+  COMPOSITE_COLORS = ['red', 'green', 'cyan', 'magenta', 'yellow']
 
   # Image parameters.
   time_param = param.Integer(default=0, bounds=(0, 10))
@@ -76,13 +109,14 @@ class ImageViewer(param.Parameterized):
   channel_param = param.ObjectSelector()
 
   # Viewer parameters
+  color_mode_param = param.ObjectSelector(default="Single", objects=["Single", "Composite"])
   colormap_param = param.ObjectSelector(default="Viridis256", objects=PALETTE_LIST)
   log_widget = pn.pane.Markdown("", css_classes=['log-widget'])
 
   def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
     super().__init__(**kwargs)
 
-    self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
+    self.image = reorder_image_dimensions(self, image, dimension_order=dimension_order)
 
     self._setup_logger()
     self._log_lines = []
@@ -115,19 +149,20 @@ class ImageViewer(param.Parameterized):
       self.param.set_default('channel_param', self.channel_names[0])
       self.active_param_widgets.append('channel_param')
 
-    self.param.colormap_param.label = "Color Map (not working)"
+    self.param.colormap_param.label = "Color Map"
     self.active_param_widgets.append('colormap_param')
+
+    self.param.color_mode_param.label = "Color Mode"
+    self.active_param_widgets.append('color_mode_param')
 
     # Assigne custom widget to certain params.
     self.param_widgets = {}
     self.param_widgets['channel_param'] = pn.widgets.RadioButtonGroup
-
-    # Create the Bokeh image.
-    self.source = bk.models.ColumnDataSource(data={})
+    self.param_widgets['color_mode_param'] = pn.widgets.RadioButtonGroup
 
     # Create the Bokeh figure.
     self._create_figure()
-    self._plot_frame(self.image[0, 0, 0])
+    self._update_image_view()
 
     self.log.info("Image viewer has been correctly initialized.")
 
@@ -169,6 +204,8 @@ class ImageViewer(param.Parameterized):
   def _create_figure(self):
     """Create the Bokeh figure to display the image."""
 
+    self.source = bk.models.ColumnDataSource(data={})
+
     figure_args = {}
     figure_args['tools'] = "pan,wheel_zoom,box_zoom,save,reset"
     figure_args['tooltips'] = [("x", "$x"), ("y", "$y"), ("value", "@image")]
@@ -178,18 +215,35 @@ class ImageViewer(param.Parameterized):
     self.fig = plotting.figure(**figure_args)
     self.fig.toolbar.logo = None
 
-    self.color_mapper = bk.models.LinearColorMapper(palette=self.colormap_param)
-    self.fig.image(image='image', x='x', y='y', dw='dw', dh='dh',
-                   source=self.source, color_mapper=self.color_mapper)
+    image_args = {}
+    image_args['image'] = 'image'
+    image_args['x'] = 'x'
+    image_args['y'] = 'y'
+    image_args['dw'] = 'dw'
+    image_args['dh'] = 'dh'
+    image_args['source'] = self.source
+
+    if self.color_mode_param is "Composite":
+      self.fig.image_rgba(**image_args)
+
+    elif self.color_mode_param is "Single":
+      self.color_mapper = bk.models.LinearColorMapper(palette=self.colormap_param)
+      self.fig.image(color_mapper=self.color_mapper, **image_args)
+
+      # Add colorbar
+      color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
+      self.fig.add_layout(color_bar, 'right')
+
+    else:
+      raise ValueError(f"Invalid color mode: {color_mode_param}")
 
     # Set figure aspect ratio and padding.
     self.fig.x_range.range_padding = 0
     self.fig.y_range.range_padding = 0
     self.fig.aspect_ratio = self.image_width / self.image_height
 
-    # Add colorbar
-    color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
-    self.fig.add_layout(color_bar, 'right')
+  def get_fig(self):
+    return self.fig
 
   def _plot_frame(self, frame):
     """Update the image Bokeh figure.
@@ -209,15 +263,44 @@ class ImageViewer(param.Parameterized):
   def _update_image_view(self):
     """Callback that trigger the image update.
     """
-    channel_index = self.channel_names.index(self.channel_param)
-    frame = self.image[self.time_param, channel_index, self.z_param]
+    if self.color_mode_param is "Composite":
+
+      # Create the composite image.
+      # TODO: do we want to cache the entire image?
+      images = self.image[self.time_param, :, self.z_param]
+      colors = self.COMPOSITE_COLORS[:self.image_channel]
+      frame = create_composite(images, colors)
+
+      # Rescale to uint8 and add an alpha channel.
+      frame = skimage.exposure.rescale_intensity(frame, out_range=(0, 255))
+      frame = frame.astype('uint8')
+      frame = np.insert(frame, 3, 255, axis=2)
+
+    elif self.color_mode_param is "Single":
+      channel_index = self.channel_names.index(self.channel_param)
+      frame = self.image[self.time_param, channel_index, self.z_param]
+
+    else:
+      raise ValueError(f"Invalid color mode: {color_mode_param}")
+
     self._plot_frame(frame)
+
+  @param.depends('color_mode_param', watch=True)
+  def _change_color_mode(self):
+    """Update viewer to match the new color mode.
+    """
+    self._create_figure()
+    self._update_image_view()
 
   @param.depends('colormap_param', watch=True)
   def _update_colormap(self):
-    """Callback that trigger the image update.
+    """Update viewer to match the new colormap.
+
+    TODO: ideally we won't have to recreate the entire image but only
+    update the colormap. See https://github.com/bokeh/bokeh/issues/8991
     """
-    self.log.info(f"Update colormap to '{self.colormap_param}'.")
+    self._create_figure()
+    self._update_image_view()
 
   def _get_image_info(self):
     """Get image informations about dimensions and current position
@@ -252,10 +335,10 @@ class ImageViewer(param.Parameterized):
 
     # Organize the widgets and containers to the final UI.
     pane1 = pn.Column(info_widget, parameters_widget)
-    pane2 = pn.Row(pane1, self.fig, sizing_mode='stretch_both')
+    pane2 = pn.Row(pane1, self.get_fig, sizing_mode='stretch_both')
 
     if self.enable_log:
-      log_container = pn.Column(self.log_widget, css_classes=['log-widget-container'], height=100)
+      log_container = pn.Column(self.log_widget, css_classes=['log-widget-container'], height=150)
       main = pn.Column(pane2, log_container)
     else:
       main = pn.Column(pane2)
