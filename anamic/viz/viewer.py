@@ -12,7 +12,7 @@ import matplotlib
 from anamic.utils import css_dict_to_string
 
 
-def reorder_image_dimensions(self, image, dimension_order=None):
+def reorder_image_dimensions(image, dimension_order=None):
   """After wrapping the image in a new view, the shape of the image
   is modified to match the dimension order of 'TCZXY'.
 
@@ -116,7 +116,7 @@ class ImageViewer(param.Parameterized):
   def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
     super().__init__(**kwargs)
 
-    self.image = reorder_image_dimensions(self, image, dimension_order=dimension_order)
+    self.image = reorder_image_dimensions(image, dimension_order)
 
     self._setup_logger()
     self._log_lines = []
@@ -223,10 +223,10 @@ class ImageViewer(param.Parameterized):
     image_args['dh'] = 'dh'
     image_args['source'] = self.source
 
-    if self.color_mode_param is "Composite":
+    if self.color_mode_param == "Composite":
       self.fig.image_rgba(**image_args)
 
-    elif self.color_mode_param is "Single":
+    elif self.color_mode_param == "Single":
       self.color_mapper = bk.models.LinearColorMapper(palette=self.colormap_param)
       self.fig.image(color_mapper=self.color_mapper, **image_args)
 
@@ -263,7 +263,7 @@ class ImageViewer(param.Parameterized):
   def _update_image_view(self):
     """Callback that trigger the image update.
     """
-    if self.color_mode_param is "Composite":
+    if self.color_mode_param == "Composite":
 
       # Create the composite image.
       # TODO: do we want to cache the entire image?
@@ -276,12 +276,12 @@ class ImageViewer(param.Parameterized):
       frame = frame.astype('uint8')
       frame = np.insert(frame, 3, 255, axis=2)
 
-    elif self.color_mode_param is "Single":
+    elif self.color_mode_param == "Single":
       channel_index = self.channel_names.index(self.channel_param)
       frame = self.image[self.time_param, channel_index, self.z_param]
 
     else:
-      raise ValueError(f"Invalid color mode: {color_mode_param}")
+      raise ValueError(f"Invalid color mode: {self.color_mode_param}")
 
     self._plot_frame(frame)
 
