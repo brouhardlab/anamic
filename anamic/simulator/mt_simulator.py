@@ -32,7 +32,7 @@ class MicrotubuleSimulator():
   """
 
   Args:
-      dimers: Numpy array of dimension 2.
+    dimers: Numpy array of dimension 2.
   """
 
   long_dimer_distance = 8  # nm
@@ -99,10 +99,10 @@ class MicrotubuleSimulator():
     """Calculate the x, y and z positions of each dimers.
 
     Args:
-        apply_random_z_rotation: boolean.
-            Apply a random rotation to 3D positions along the Z axis (microtubule length).
-        show_progress: boolean.
-            Show a progress bar.
+      apply_random_z_rotation: boolean.
+          Apply a random rotation to 3D positions along the Z axis (microtubule length).
+      show_progress: boolean.
+          Show a progress bar.
     """
 
     if MicrotubuleSimulator.enable_cached_positions:
@@ -241,7 +241,7 @@ class MicrotubuleSimulator():
     The SNR is very sensitive to the line_width parameter.
 
     Args:
-        line_width: float, used to select pixels belonging to the signal (pixel).
+      line_width: float, used to select pixels belonging to the signal (pixel).
     """
 
     x1, x2, y1, y2 = structure.get_mt_tips(self.positions, coordinates_features=['y_pixel', 'x_pixel'])
@@ -267,13 +267,13 @@ class MicrotubuleSimulator():
     """Visualize 2D dimer positions.
 
     Args:
-        x_feature: string, the x feature to be used.
-        y_feature: string, the y feature to be used.
-        show_all: boolean, show all visible dimers.
-        show_labeled: boolean, show only labeled dimers.
-        color_feature: string, feature to use to color dimers.
-        marker_size: float, size of the dimer marker.
-        x_offset: float, offset apply on the X axis to show only the tips.
+      x_feature: string, the x feature to be used.
+      y_feature: string, the y feature to be used.
+      show_all: boolean, show all visible dimers.
+      show_labeled: boolean, show only labeled dimers.
+      color_feature: string, feature to use to color dimers.
+      marker_size: float, size of the dimer marker.
+      x_offset: float, offset apply on the X axis to show only the tips.
     """
 
     axs = None

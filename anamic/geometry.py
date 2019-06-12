@@ -6,9 +6,9 @@ def get_point_from_vector(vec, point, distance):
   at a certain distance from the input point.
 
   Args:
-      vec: array, vector.
-      point: array, input point.
-      distance: float, the distance.
+    vec: array, vector.
+    point: array, input point.
+    distance: float, the distance.
   """
   vec = np.array(vec)
   point = np.array(point)
@@ -22,8 +22,8 @@ def discretize_line(line, spacing):
   The list will also include the input line points.
 
   Args:
-      line: array, shape=2x2
-      spacing: float, the distance between each points.
+    line: array, shape=2x2
+    spacing: float, the distance between each points.
 
   """
 
@@ -46,10 +46,10 @@ def get_normal_points(vec, points, distance):
   to the vector at a specific distance from the input point.
 
   Args:
-      vec: array, vector.
-      points: array, input point (can be a single point
-          or an array of points).
-      distance: float.
+    vec: array, vector.
+    points: array, input point (can be a single point
+        or an array of points).
+    distance: float.
   """
   vec = np.array(vec)
   points = np.array(points)
@@ -75,9 +75,9 @@ def get_rectangle_from_middle_line(p1, p2, rectangle_width):
   rectangle in its middle.
 
   Args:
-      p1: list or array, x and y of point 1.
-      p2: list or array, x and y of point 2.
-      rectangle_width: float, width of the rectangle.
+    p1: list or array, x and y of point 1.
+    p2: list or array, x and y of point 2.
+    rectangle_width: float, width of the rectangle.
   """
 
   p1 = np.array(p1)
@@ -111,8 +111,8 @@ def get_mask_from_polygon(image, polygon):
   """Get a mask image of pixels inside the polygon.
 
   Args:
-      image: Numpy array of dimension 2.
-      polygon: Numpy array of dimension 2 (2xN).
+    image: Numpy array of dimension 2.
+    polygon: Numpy array of dimension 2 (2xN).
   """
   from matplotlib import path
   xx, yy = np.meshgrid(np.arange(image.shape[1]), np.arange(image.shape[0]))

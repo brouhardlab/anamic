@@ -12,17 +12,17 @@ def get_thick_line(point1, point2, length_spacing=1, line_thickness=0, width_spa
   `line_thickness`.
 
   Args:
-      point1: 1D array or float.
-      point2: 1D array or float.
-      length_spacing: float, when computing the points inside a line
-          what distance should separate the points (pixel).
-      line_thickness: float, the thickness of the line used centered on
-          the input line (pixel).
-      width_spacing: float, same as `length_spacing` but in the  perpendicular
-          direction when `line_thickness` is not 0.
+    point1: 1D array or float.
+    point2: 1D array or float.
+    length_spacing: float, when computing the points inside a line
+        what distance should separate the points (pixel).
+    line_thickness: float, the thickness of the line used centered on
+        the input line (pixel).
+    width_spacing: float, same as `length_spacing` but in the  perpendicular
+        direction when `line_thickness` is not 0.
 
   Returns:
-      points: 3D array of shape [2xWxL] where W are points along the thickness of the line and L along its length.
+    points: 3D array of shape [2xWxL] where W are points along the thickness of the line and L along its length.
   """
 
   line_tips = np.array([point1, point2])
@@ -60,20 +60,20 @@ def line_profile(image, point1, point2,
   """Get a line profile defined by an image and two points.
 
   Args:
-      image: 2D array.
-      point1: 1D array or float.
-      point2: 1D array or float.
-      length_spacing: float, when computing the points inside a line
-          what distance should separate the points (pixel).
-      line_thickness: float, the thickness of the line used centered on
-          the input line (pixel).
-      width_spacing: float, same as `length_spacing` but in the  perpendicular
-          direction when `line_thickness` is not 0.
-      normalized_intensities: bool, normalize from 0 to 1 if True.
+    image: 2D array.
+    point1: 1D array or float.
+    point2: 1D array or float.
+    length_spacing: float, when computing the points inside a line
+        what distance should separate the points (pixel).
+    line_thickness: float, the thickness of the line used centered on
+        the input line (pixel).
+    width_spacing: float, same as `length_spacing` but in the  perpendicular
+        direction when `line_thickness` is not 0.
+    normalized_intensities: bool, normalize from 0 to 1 if True.
 
   Returns:
-      x_profile: array, the x coordinates of the profile where unit is pixel.
-      y_profile: array, the intensities values of the profile.
+    x_profile: array, the x coordinates of the profile where unit is pixel.
+    y_profile: array, the intensities values of the profile.
   """
 
   lines = get_thick_line(point1, point2, length_spacing=length_spacing,
@@ -108,11 +108,11 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
   in the image of this value.
 
   Args:
-      lines: see what returns `get_thick_line()`.
-      image: 2D array.
-      length_spacing: float, `get_thick_line()`.
-      fit_threshold: float, fit with a `mu` stderr above this value will be discarded.
-      continuous_discard: bool, Discard all fit after the first one above `fit_threshold`.
+    lines: see what returns `get_thick_line()`.
+    image: 2D array.
+    length_spacing: float, `get_thick_line()`.
+    fit_threshold: float, fit with a `mu` stderr above this value will be discarded.
+    continuous_discard: bool, Discard all fit after the first one above `fit_threshold`.
   """
 
   def gaussian_wall(x, mu, sigma, mt, bg):
@@ -175,12 +175,12 @@ def tip_line_fit(point1, point2, image, length_spacing, line_thickness, width_sp
   """Fit the tip of a line to a complementary error function, 1 - erf(x).
 
   Args:
-      point1: 1D array or float.
-      point2: 1D array or float.
-      image: 2D array.
-      length_spacing: float, `get_thick_line()`.
-      line_thickness: float, `get_thick_line()`.
-      width_spacing: float, `get_thick_line()`.
+    point1: 1D array or float.
+    point2: 1D array or float.
+    image: 2D array.
+    length_spacing: float, `get_thick_line()`.
+    line_thickness: float, `get_thick_line()`.
+    width_spacing: float, `get_thick_line()`.
   """
 
   profile_parameters = {}
@@ -211,14 +211,14 @@ def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpe
                            offset_start, offset_end, tip_fit_args):
   """
   Args:
-      tip_start:
-      tip_end:
-      image:
-      get_thick_line_args:
-      perpendicular_line_fit_args:
-      offset_start:
-      offset_end:
-      tip_fit_args:
+    tip_start:
+    tip_end:
+    image:
+    get_thick_line_args:
+    perpendicular_line_fit_args:
+    offset_start:
+    offset_end:
+    tip_fit_args:
   """
   lines = get_thick_line(tip_start, tip_end, **get_thick_line_args)
 
