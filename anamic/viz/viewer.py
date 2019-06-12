@@ -235,7 +235,7 @@ class ImageViewer(param.Parameterized):
       self.fig.add_layout(color_bar, 'right')
 
     else:
-      raise ValueError(f"Invalid color mode: {color_mode_param}")
+      raise ValueError(f"Invalid color mode: {self.color_mode_param}")
 
     # Set figure aspect ratio and padding.
     self.fig.x_range.range_padding = 0
