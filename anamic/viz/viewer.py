@@ -6,6 +6,7 @@ import panel as pn
 import param
 import bokeh as bk
 from bokeh import plotting
+import colorcet as cc
 import skimage
 import matplotlib
 
@@ -81,11 +82,26 @@ def create_composite(images, colors):
     im = skimage.img_as_float(im)
     im = skimage.color.gray2rgb(im)
     im *= rgb
-    #im = skimage.color.rgb2hsv(im)
     colored_images.append(im)
   colored_images = np.array(colored_images)
   composite = np.sum(colored_images, axis=0)
   return composite
+
+
+def get_palettes():
+  palettes = {}
+  palettes['grey'] = bk.palettes.Greys256
+  palettes['inferno'] = bk.palettes.Inferno256
+  palettes['magma'] = bk.palettes.Magma256
+  palettes['plasma'] = bk.palettes.Plasma256
+  palettes['viridis'] = bk.palettes.Viridis256
+  palettes['cividis'] = bk.palettes.Cividis256
+  palettes['fire'] = cc.fire
+  palettes['rainbow'] = cc.rainbow
+  palettes['red'] = cc.kr
+  palettes['green'] = cc.kg
+  palettes['blue'] = cc.kb
+  return palettes
 
 
 # pylint: disable=too-many-instance-attributes
@@ -99,8 +115,6 @@ class ImageViewer(param.Parameterized):
       enable_log: bool, whether displaying a logging widget.
   """
 
-  # pylint: disable=no-member
-  PALETTE_LIST = bk.palettes.__palettes__
   COMPOSITE_COLORS = ['red', 'green', 'cyan', 'magenta', 'yellow']
 
   # Image parameters.
@@ -110,7 +124,7 @@ class ImageViewer(param.Parameterized):
 
   # Viewer parameters
   color_mode_param = param.ObjectSelector(default="Single", objects=["Single", "Composite"])
-  colormap_param = param.ObjectSelector(default="Viridis256", objects=PALETTE_LIST)
+  colormap_param = param.ObjectSelector()
   log_widget = pn.pane.Markdown("", css_classes=[])
 
   def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
@@ -153,6 +167,9 @@ class ImageViewer(param.Parameterized):
 
     self.param.colormap_param.label = "Color Map"
     self.active_param_widgets.append('colormap_param')
+    self.palettes = get_palettes()
+    self.param.colormap_param.objects = [name.capitalize() for name in self.palettes.keys()]
+    self.param.set_default('colormap_param', "Viridis")
 
     self.param.color_mode_param.label = "Color Mode"
     self.active_param_widgets.append('color_mode_param')
@@ -253,7 +270,8 @@ class ImageViewer(param.Parameterized):
       self.color_bar = None
 
     elif self.color_mode_param == "Single":
-      self.color_mapper = bk.models.LinearColorMapper(palette=self.colormap_param)
+      palette = self.palettes[str(self.colormap_param).lower()]
+      self.color_mapper = bk.models.LinearColorMapper(palette=palette)
       self.fig.image(color_mapper=self.color_mapper, **image_args)
 
       # Add colorbar

@@ -59,7 +59,7 @@ enable=all
 # unbalanced-tuple-unpacking
 # not-context-manager
 # missing-docstring
-disable=missing-docstring,logging-fstring-interpolation,locally-disabled,suppressed-message,useless-suppression,no-self-use
+disable=missing-docstring,logging-fstring-interpolation,locally-disabled,suppressed-message,useless-suppression,no-self-use,consider-iterating-dictionary,no-member
 
 # Set the cache size for astng objects.
 cache-size=500
