@@ -126,7 +126,7 @@ class ImageViewer(param.Parameterized):
     image_tooltips.append(('Values', values))
 
     figure_args = {}
-    figure_args['tools'] = "pan,wheel_zoom,box_zoom,save,reset"
+    figure_args['tools'] = ["pan", "wheel_zoom", "box_zoom", "save", "reset"]
     figure_args['tooltips'] = image_tooltips
     figure_args['active_scroll'] = "wheel_zoom"
     figure_args['match_aspect'] = True
@@ -138,6 +138,7 @@ class ImageViewer(param.Parameterized):
 
     self.fig = plotting.figure(**figure_args)
     self.fig.toolbar.logo = None
+    self.fig.tools[2].match_aspect = True
 
     image_args = {}
     image_args['image'] = 'image'
