@@ -10,7 +10,7 @@ from anamic.utils import css_dict_to_string
 from anamic.imaging import reorder_image_dimensions
 from anamic.imaging import create_composite
 from anamic.imaging import get_palettes
-from anamic.viz import LoggingWidget
+from .log_widget import LoggingWidget
 
 
 # pylint: disable=too-many-instance-attributes
