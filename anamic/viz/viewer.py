@@ -1,107 +1,16 @@
-import logging
-
 import numpy as np
 import pandas as pd
 import panel as pn
 import param
 import bokeh as bk
 from bokeh import plotting
-import colorcet as cc
 import skimage
-import matplotlib
 
 from anamic.utils import css_dict_to_string
-
-
-def reorder_image_dimensions(image, dimension_order=None):
-  """After wrapping the image in a new view, the shape of the image
-  is modified to match the dimension order of 'TCZXY'.
-
-  Args:
-      dimension_order: str, the current order of dimension of the image. None
-        assumes the dimensions to be 'XY', 'TXY', 'TCXY' or 'TCZXY'.
-
-  Returns:
-      The new view of the image.
-  """
-  dimension_orders = {}
-  dimension_orders[2] = "XY"
-  dimension_orders[3] = "TXY"
-  dimension_orders[4] = "TCXY"
-  dimension_orders[5] = "TCZXY"
-  default_dimension_order = dimension_orders[5]
-
-  image = image.view()
-
-  if image.ndim < 2 or image.ndim > 5:
-    mess = "The image needs to be of dimension 2 to 5. "
-    mess += f"Number of dimension found is {image.ndim} of shape {image.shape}."
-    raise ValueError(mess)
-
-  if not dimension_order:
-    current_order = dimension_orders[image.ndim]
-  else:
-    if len(dimension_order) != image.ndim:
-      mess = "`dimension_order` needs to have the length of the image dimensions. "
-      mess += f"dimension_order={len(dimension_order)} and image number of dimension is {image.ndim}."
-      raise ValueError(mess)
-    current_order = dimension_order
-  current_order = list(current_order)
-
-  missing_dims = set(default_dimension_order) - set(current_order)
-  for missing_dim in missing_dims:
-    image = np.expand_dims(image, axis=0)
-    current_order.insert(0, missing_dim)
-
-  new_order_indices = [current_order.index(dim) for dim in default_dimension_order]
-  image = np.transpose(image, axes=new_order_indices)
-
-  return image
-
-
-def create_composite(images, colors):
-  """Given a stack of 2D images and a list of colors. Create a composite
-  RGB image.
-
-  Args:
-      images: array, a stack of 2D Numpy images.
-      colors: list, a list of colors. The length of the list
-        must be the same as `images`.
-
-  Returns:
-      composite, an RGB image.
-  """
-
-  if images.shape[0] != len(colors):
-    mess = "The size of `colors` is different than the number of dimensions of `images`"
-    raise ValueError(mess)
-
-  colored_images = []
-  for color, im in zip(colors, images):
-    rgb = list(matplotlib.colors.to_rgb(color))
-    im = skimage.img_as_float(im)
-    im = skimage.color.gray2rgb(im)
-    im *= rgb
-    colored_images.append(im)
-  colored_images = np.array(colored_images)
-  composite = np.sum(colored_images, axis=0)
-  return composite
-
-
-def get_palettes():
-  palettes = {}
-  palettes['grey'] = bk.palettes.Greys256
-  palettes['inferno'] = bk.palettes.Inferno256
-  palettes['magma'] = bk.palettes.Magma256
-  palettes['plasma'] = bk.palettes.Plasma256
-  palettes['viridis'] = bk.palettes.Viridis256
-  palettes['cividis'] = bk.palettes.Cividis256
-  palettes['fire'] = cc.fire
-  palettes['rainbow'] = cc.rainbow
-  palettes['red'] = cc.kr
-  palettes['green'] = cc.kg
-  palettes['blue'] = cc.kb
-  return palettes
+from anamic.imaging import reorder_image_dimensions
+from anamic.imaging import create_composite
+from anamic.imaging import get_palettes
+from anamic.viz import LoggingWidget
 
 
 # pylint: disable=too-many-instance-attributes
@@ -130,13 +39,14 @@ class ImageViewer(param.Parameterized):
   def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
     super().__init__(**kwargs)
 
+    # Reshape the image
     self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
 
+    # Get an ID for this viewer's instance
     self.viewer_id = id(self)
 
-    self._setup_logger()
-    self._log_lines = []
-    self.enable_log = enable_log
+    # Setup the logger
+    self.log = LoggingWidget(logger_name=f"Imageviewer-{self.viewer_id}", enable=enable_log)
 
     # Get image dimensions.
     self.image_time = self.image.shape[0]
@@ -186,42 +96,14 @@ class ImageViewer(param.Parameterized):
 
     self.log.info("Image viewer has been correctly initialized.")
 
-  def _setup_logger(self):
-    self.log = logging.getLogger(f'ImageViewer-{str(self)}')
-    self.log.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(message)s")
-    custom_handler = logging.StreamHandler()
-    custom_handler.setFormatter(formatter)
-    custom_handler.emit = self._logging_handler
-    self.log.addHandler(custom_handler)
-    self.log_widget.css_classes.append(f'log-widget-{self.viewer_id}')
-
-  def _logging_handler(self, record):
-    """Log a message in the UI.
-    """
-    if self.enable_log:
-      message = self.log.handlers[0].format(record)
-      self._log_lines.append(message)
-      self.log_widget.object = "<br/>".join(self._log_lines[::-1])
-
   def _set_css(self):
     """Define CSS properties.
     """
     css = {}
     css[f'.viewer-{self.viewer_id}'] = {}
-    #css[f'.viewer-{self.viewer_id}']['border'] = '1px #5d5d5d solid !important'
+    # css[f'.viewer-{self.viewer_id}']['border'] = '1px #5d5d5d solid !important'
     #css[f'.viewer-{self.viewer_id}']['min-width'] = '100% !important'
     #css[f'.viewer-{self.viewer_id}']['min-height'] = '100% !important'
-    css[f'.log-widget-container-{self.viewer_id}'] = {}
-    css[f'.log-widget-container-{self.viewer_id}']['background'] = '#fbfbfb'
-    css[f'.log-widget-container-{self.viewer_id}']['border'] = '1px #eaeaea solid !important'
-    css[f'.log-widget-container-{self.viewer_id}']['overflow-y'] = 'auto'
-    css[f'.log-widget-container-{self.viewer_id}']['border-radius'] = '0'
-    css[f'.log-widget-container-{self.viewer_id}']['margin'] = '10px !important'
-    css[f'.log-widget-container-{self.viewer_id}']['resize'] = 'both'
-    css[f'.log-widget-container-{self.viewer_id}']['min-width'] = '100% !important'
-    css[f'.log-widget-{self.viewer_id}'] = {}
-    #css[f'.log-widget-{self.viewer_id}']['min-width'] = '100%'
 
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
@@ -389,11 +271,6 @@ class ImageViewer(param.Parameterized):
     #   return None
     return None
 
-  def _get_log_widget(self):
-    if self.enable_log:
-      return pn.Column(self.log_widget, height=150, css_classes=[f'log-widget-container-{self.viewer_id}'], sizing_mode='stretch_width')
-    return None
-
   def panel(self):
     """The image viewer as a panel to display.
     """
@@ -411,5 +288,5 @@ class ImageViewer(param.Parameterized):
     image_container = pn.Row(self._get_fig, self._get_color_bar, sizing_mode='scale_both')
 
     content_container = pn.Row(tool_widget, image_container)
-    main = pn.Column(content_container, self._get_log_widget, css_classes=[f'viewer-{self.viewer_id}'], sizing_mode='scale_both')
+    main = pn.Column(content_container, self.log.panel(), css_classes=[f'viewer-{self.viewer_id}'], sizing_mode='scale_both')
     return main

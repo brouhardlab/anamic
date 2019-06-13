@@ -4,4 +4,5 @@ from .plot import viz_dimers
 from .plot import imshow_colorbar
 from .plot import show_tips
 
+from .log_widget import LoggingWidget
 from .viewer import ImageViewer
