@@ -111,12 +111,14 @@ class ImageViewer(param.Parameterized):
   # Viewer parameters
   color_mode_param = param.ObjectSelector(default="Single", objects=["Single", "Composite"])
   colormap_param = param.ObjectSelector(default="Viridis256", objects=PALETTE_LIST)
-  log_widget = pn.pane.Markdown("", css_classes=['log-widget'])
+  log_widget = pn.pane.Markdown("", css_classes=[])
 
   def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
     super().__init__(**kwargs)
 
     self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
+
+    self.viewer_id = id(self)
 
     self._setup_logger()
     self._log_lines = []
@@ -139,7 +141,7 @@ class ImageViewer(param.Parameterized):
 
     if self.image_z > 1:
       self.param.z_param.label = "Z"
-      self.param.z_param.bounds = (0, self.image_time - 1)
+      self.param.z_param.bounds = (0, self.image_z - 1)
       self.active_param_widgets.append('z_param')
 
     if self.image_channel > 1:
@@ -175,6 +177,7 @@ class ImageViewer(param.Parameterized):
     custom_handler.setFormatter(formatter)
     custom_handler.emit = self._logging_handler
     self.log.addHandler(custom_handler)
+    self.log_widget.css_classes.append(f'log-widget-{self.viewer_id}')
 
   def _logging_handler(self, record):
     """Log a message in the UI.
@@ -188,16 +191,20 @@ class ImageViewer(param.Parameterized):
     """Define CSS properties.
     """
     css = {}
-    css['.log-widget-container'] = {}
-    css['.log-widget-container']['background'] = '#fbfbfb'
-    css['.log-widget-container']['border'] = '1px #eaeaea solid !important'
-    css['.log-widget-container']['overflow-y'] = 'auto'
-    css['.log-widget-container']['min-width'] = '100%'
-    css['.log-widget-container']['border-radius'] = '0'
-    css['.log-widget-container']['padding'] = '25px !important'
-    css['.log-widget-container']['resize'] = 'both'
-    css['.log-widget'] = {}
-    css['.log-widget']['min-width'] = '95%'
+    css[f'.viewer-{self.viewer_id}'] = {}
+    #css[f'.viewer-{self.viewer_id}']['border'] = '1px #5d5d5d solid !important'
+    #css[f'.viewer-{self.viewer_id}']['min-width'] = '100% !important'
+    #css[f'.viewer-{self.viewer_id}']['min-height'] = '100% !important'
+    css[f'.log-widget-container-{self.viewer_id}'] = {}
+    css[f'.log-widget-container-{self.viewer_id}']['background'] = '#fbfbfb'
+    css[f'.log-widget-container-{self.viewer_id}']['border'] = '1px #eaeaea solid !important'
+    css[f'.log-widget-container-{self.viewer_id}']['overflow-y'] = 'auto'
+    css[f'.log-widget-container-{self.viewer_id}']['border-radius'] = '0'
+    css[f'.log-widget-container-{self.viewer_id}']['margin'] = '10px !important'
+    css[f'.log-widget-container-{self.viewer_id}']['resize'] = 'both'
+    css[f'.log-widget-container-{self.viewer_id}']['min-width'] = '100% !important'
+    css[f'.log-widget-{self.viewer_id}'] = {}
+    #css[f'.log-widget-{self.viewer_id}']['min-width'] = '100%'
 
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
@@ -207,11 +214,24 @@ class ImageViewer(param.Parameterized):
 
     self.source = bk.models.ColumnDataSource(data={})
 
+    image_tooltips = []
+    image_tooltips.append(('x, y', '$x{0,0.00}, $y{0,0.00}'))
+    if self.image_time > 1:
+      image_tooltips.append(('Time', '@time'))
+    if self.image_z > 1:
+      image_tooltips.append(('Z', '@z'))
+    if self.image_channel > 1:
+      image_tooltips.append(('Channel', '@channel'))
+
+    values = ", ".join([f'@channel_{i}' for i in range(self.image_channel)])
+    image_tooltips.append(('Values', values))
+
     figure_args = {}
     figure_args['tools'] = "pan,wheel_zoom,box_zoom,save,reset"
-    figure_args['tooltips'] = [("x", "$x"), ("y", "$y"), ("value", "@image")]
+    figure_args['tooltips'] = image_tooltips
     figure_args['active_scroll'] = "wheel_zoom"
     figure_args['match_aspect'] = True
+    figure_args['sizing_mode'] = 'stretch_both'
 
     if self.fig:
       figure_args['x_range'] = self.fig.x_range
@@ -230,14 +250,14 @@ class ImageViewer(param.Parameterized):
 
     if self.color_mode_param == "Composite":
       self.fig.image_rgba(**image_args)
+      self.color_bar = None
 
     elif self.color_mode_param == "Single":
       self.color_mapper = bk.models.LinearColorMapper(palette=self.colormap_param)
       self.fig.image(color_mapper=self.color_mapper, **image_args)
 
       # Add colorbar
-      #color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
-      #self.fig.add_layout(color_bar, 'right')
+      self.color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
@@ -247,14 +267,15 @@ class ImageViewer(param.Parameterized):
     self.fig.y_range.range_padding = 0
     self.fig.aspect_ratio = self.image_width / self.image_height
 
-  def get_fig(self):
+  def _get_fig(self):
     return self.fig
 
-  def _plot_frame(self, frame):
+  def _plot_frame(self, frame, metadata):
     """Update the image Bokeh figure.
 
     Args:
         frame: a 2D array.
+        metadata: dict, used for the tooltips.
     """
     data = {}
     data['image'] = [frame]
@@ -262,12 +283,15 @@ class ImageViewer(param.Parameterized):
     data['y'] = [0]
     data['dw'] = [self.image_width]
     data['dh'] = [self.image_height]
+    data.update(metadata)
     self.source.data = data
 
   @param.depends('time_param', 'channel_param', 'z_param', watch=True)
   def _update_image_view(self):
     """Callback that trigger the image update.
     """
+    channel_index = self.channel_names.index(self.channel_param)
+
     if self.color_mode_param == "Composite":
 
       # Create the composite image.
@@ -282,13 +306,24 @@ class ImageViewer(param.Parameterized):
       frame = np.insert(frame, 3, 255, axis=2)
 
     elif self.color_mode_param == "Single":
-      channel_index = self.channel_names.index(self.channel_param)
       frame = self.image[self.time_param, channel_index, self.z_param]
+      images = frame
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
 
-    self._plot_frame(frame)
+    metadata = {}
+    if self.image_time > 1:
+      metadata['time'] = [self.time_param]
+    if self.image_z > 1:
+      metadata['z'] = [self.z_param]
+    if self.image_channel > 1:
+      metadata['channel'] = [self.channel_param]
+
+    for i in range(self.image_channel):
+      metadata[f'channel_{i}'] = [self.image[self.time_param, i, self.z_param]]
+
+    self._plot_frame(frame, metadata)
 
   @param.depends('color_mode_param', watch=True)
   def _change_color_mode(self):
@@ -326,6 +361,21 @@ class ImageViewer(param.Parameterized):
     infos = pd.DataFrame(infos, columns=['Dimension', 'Size', 'Position'])
     return infos.to_html(index=False)
 
+  def _get_color_bar(self):
+    # if self.color_bar:
+    #   cbar_fig = plotting.figure(tools="",  toolbar_location=None, min_border=0, outline_line_color=None, height=self.fig.height)
+    #   cbar_fig.add_layout(self.color_bar)
+    #   bar_container = pn.Row(cbar_fig, width_policy='min', height_policy='min')
+    #   return None
+    # else:
+    #   return None
+    return None
+
+  def _get_log_widget(self):
+    if self.enable_log:
+      return pn.Column(self.log_widget, height=150, css_classes=[f'log-widget-container-{self.viewer_id}'], sizing_mode='stretch_width')
+    return None
+
   def panel(self):
     """The image viewer as a panel to display.
     """
@@ -339,13 +389,9 @@ class ImageViewer(param.Parameterized):
     parameters_widget = pn.Param(self.param, parameters=self.active_param_widgets, widgets=self.param_widgets)
 
     # Organize the widgets and containers to the final UI.
-    pane1 = pn.Column(info_widget, parameters_widget)
-    pane2 = pn.Row(pane1, self.get_fig, sizing_mode='stretch_both')
+    tool_widget = pn.Column(info_widget, parameters_widget)
+    image_container = pn.Row(self._get_fig, self._get_color_bar, sizing_mode='scale_both')
 
-    if self.enable_log:
-      log_container = pn.Column(self.log_widget, css_classes=['log-widget-container'], height=150)
-      main = pn.Column(pane2, log_container)
-    else:
-      main = pn.Column(pane2)
-
+    content_container = pn.Row(tool_widget, image_container)
+    main = pn.Column(content_container, self._get_log_widget, css_classes=[f'viewer-{self.viewer_id}'], sizing_mode='scale_both')
     return main
