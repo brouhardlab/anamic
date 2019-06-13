@@ -191,7 +191,11 @@ class ImageViewer(param.Parameterized):
   def _update_image_view(self):
     """Callback that trigger the image update.
     """
-    channel_index = self.channel_names.index(self.channel_param)
+
+    if self.image_channel > 1:
+      channel_index = self.channel_names.index(self.channel_param)
+    else:
+      channel_index = 0
 
     if self.color_mode_param == "Composite":
 
