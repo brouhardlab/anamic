@@ -11,6 +11,7 @@ from anamic.imaging import reorder_image_dimensions
 from anamic.imaging import create_composite
 from anamic.imaging import get_palettes
 from .log_widget import LoggingWidget
+from .drawer import ObjectDrawer
 
 
 # pylint: disable=too-many-instance-attributes
@@ -36,7 +37,7 @@ class ImageViewer(param.Parameterized):
   color_mode_param = param.ObjectSelector(default="Single", objects=["Single", "Composite"])
   colormap_param = param.ObjectSelector()
 
-  def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
+  def __init__(self, image, dimension_order=None, enable_log=True, _drawer_class=ObjectDrawer, **kwargs):
     super().__init__(**kwargs)
 
     # Reshape the image
@@ -101,7 +102,13 @@ class ImageViewer(param.Parameterized):
 
     # Create the Bokeh figure.
     self.fig = None
+    self.drawer = None
     self._create_figure()
+
+    # Init the object drawer
+    self.drawer = _drawer_class(self.fig, self.log)
+
+    # Trigger first plot update.
     self._update_image_view()
 
     # Update range for values.
@@ -190,6 +197,10 @@ class ImageViewer(param.Parameterized):
     self.fig.y_range.range_padding = 0
     self.fig.aspect_ratio = self.image_width / self.image_height
 
+    # Tell the drawer the figure is new
+    if self.drawer:
+      self.drawer.update_fig(self.fig)
+
   def _get_fig(self):
     return self.fig
 
@@ -219,7 +230,7 @@ class ImageViewer(param.Parameterized):
     if self.color_mode_param == "Composite":
 
       # Bound channels independently.
-      images = self.image[self.time_param, :, self.z_param]
+      images = self.image[self.time_param, :, self.z_param].copy()
       for i, bound in enumerate(self.intensities_bounds):
         images[i] = skimage.exposure.rescale_intensity(images[i], in_range=bound)
 
@@ -233,7 +244,7 @@ class ImageViewer(param.Parameterized):
       frame = np.insert(frame, 3, 255, axis=2)
 
     elif self.color_mode_param == "Single":
-      frame = self.image[self.time_param, channel_index, self.z_param]
+      frame = self.image[self.time_param, channel_index, self.z_param].copy()
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
@@ -248,6 +259,13 @@ class ImageViewer(param.Parameterized):
 
     for i in range(self.image_channel):
       metadata[f'channel_{i}'] = [self.image[self.time_param, i, self.z_param]]
+
+    # Update the drawer
+    if self.drawer:
+      self.drawer.cursor["time_index"] = self.time_param
+      self.drawer.cursor["channel_index"] = channel_index
+      self.drawer.cursor["z_index"] = self.z_param
+      self.drawer.draw()
 
     self._plot_frame(frame, metadata)
 
@@ -281,9 +299,6 @@ class ImageViewer(param.Parameterized):
   @param.depends('colormap_param', watch=True)
   def _update_colormap(self):
     """Update viewer to match the new colormap.
-
-    TODO: ideally we won't have to recreate the entire image but only
-    update the colormap. See https://github.com/bokeh/bokeh/issues/8991
     """
     self.color_mapper.palette = self.palettes[str(self.colormap_param).lower()]
 

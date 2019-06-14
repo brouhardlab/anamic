@@ -1,40 +1,39 @@
 import logging
 
 import panel as pn
-import param
 
 from anamic.utils import css_dict_to_string
 
 
-class LoggingWidget(param.Parameterized):
-  widget = pn.pane.Markdown("", css_classes=[])
+class LoggingWidget():
 
-  def __init__(self, logger_name, enable=True, **kwargs):
-    super().__init__(**kwargs)
+  def __init__(self, logger_name, enable=True):
+    super().__init__()
 
     self.logger_name = logger_name
     self.enable = enable
     self.widget_id = id(self)
     self.log = None
     self._log_lines = []
+    self.widget = pn.pane.Markdown("", css_classes=[])
 
     self._setup_logger()
 
   def info(self, message):
-    self.log.info(message)
+    self.log.info(str(message))
 
   def error(self, message):
-    self.log.error(message)
+    self.log.error(str(message))
 
   def warn(self, message):
-    self.log.warning(message)
+    self.log.warning(str(message))
 
   def critical(self, message):
-    self.log.critical(message)
+    self.log.critical(str(message))
 
   # pylint: disable=arguments-differ
   def debug(self, message):
-    self.log.debug(message)
+    self.log.debug(str(message))
 
   def _setup_logger(self):
     self.log = logging.getLogger(self.logger_name)
@@ -52,7 +51,7 @@ class LoggingWidget(param.Parameterized):
     """
     if self.enable:
       message = self.log.handlers[0].format(record)
-      self._log_lines.append(message)
+      self._log_lines.append(str(message))
       self.widget.object = "<br/>".join(self._log_lines[::-1])
 
   def _set_css(self):

@@ -6,3 +6,4 @@ from .plot import show_tips
 
 from .log_widget import LoggingWidget
 from .viewer import ImageViewer
+from .drawer import ObjectDrawer
