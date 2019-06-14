@@ -1,0 +1,3 @@
+- The notebooks here are only used for the internal development of anamic.
+- Some of them might be broken due to API changes in anamic.
+- The notebooks are not updated to match the newest API.

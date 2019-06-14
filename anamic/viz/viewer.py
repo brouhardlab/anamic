@@ -32,9 +32,9 @@ class ImageViewer(param.Parameterized):
   channel_param = param.ObjectSelector()
 
   # Viewer parameters
+  intensities_param = param.Range(default=(3, 7), bounds=(0, 10))
   color_mode_param = param.ObjectSelector(default="Single", objects=["Single", "Composite"])
   colormap_param = param.ObjectSelector()
-  log_widget = pn.pane.Markdown("", css_classes=[])
 
   def __init__(self, image, dimension_order=None, enable_log=True, **kwargs):
     super().__init__(**kwargs)
@@ -48,12 +48,19 @@ class ImageViewer(param.Parameterized):
     # Setup the logger
     self.log = LoggingWidget(logger_name=f"Imageviewer-{self.viewer_id}", enable=enable_log)
 
-    # Get image dimensions.
+    # Get image informations.
     self.image_time = self.image.shape[0]
     self.image_channel = self.image.shape[1]
     self.image_z = self.image.shape[2]
     self.image_height = self.image.shape[3]
     self.image_width = self.image.shape[4]
+
+    # Store min and max of the image per channel.
+    self.image_max = [self.image[:, i].max() for i in range(self.image_channel)]
+    self.image_min = [self.image[:, i].min() for i in range(self.image_channel)]
+
+    # Set intensities bounds.
+    self.intensities_bounds = [(self.image_min[i], self.image_max[i]) for i in range(self.image_channel)]
 
     # Custom parameter widgets.
     self.active_param_widgets = []
@@ -75,6 +82,9 @@ class ImageViewer(param.Parameterized):
       self.param.set_default('channel_param', self.channel_names[0])
       self.active_param_widgets.append('channel_param')
 
+    self.param.intensities_param.label = "Intensity Range"
+    self.active_param_widgets.append('intensities_param')
+
     self.param.colormap_param.label = "Color Map"
     self.active_param_widgets.append('colormap_param')
     self.palettes = get_palettes()
@@ -94,7 +104,15 @@ class ImageViewer(param.Parameterized):
     self._create_figure()
     self._update_image_view()
 
+    # Update range for values.
+    self._update_intensities_slider_bounds()
+
     self.log.info("Image viewer has been correctly initialized.")
+
+  def _get_channel_index(self):
+    if self.image_channel > 1:
+      return self.channel_names.index(self.channel_param)
+    return 0
 
   def _set_css(self):
     """Define CSS properties.
@@ -153,12 +171,16 @@ class ImageViewer(param.Parameterized):
       self.color_bar = None
 
     elif self.color_mode_param == "Single":
+
+      bounds = self.intensities_bounds[self._get_channel_index()]
       palette = self.palettes[str(self.colormap_param).lower()]
-      self.color_mapper = bk.models.LinearColorMapper(palette=palette)
+
+      self.color_mapper = bk.models.LinearColorMapper(low=bounds[0], high=bounds[1], palette=palette)
       self.fig.image(color_mapper=self.color_mapper, **image_args)
 
       # Add colorbar
       self.color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
+      self.fig.add_layout(self.color_bar, 'right')
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
@@ -192,16 +214,16 @@ class ImageViewer(param.Parameterized):
     """Callback that trigger the image update.
     """
 
-    if self.image_channel > 1:
-      channel_index = self.channel_names.index(self.channel_param)
-    else:
-      channel_index = 0
+    channel_index = self._get_channel_index()
 
     if self.color_mode_param == "Composite":
 
-      # Create the composite image.
-      # TODO: do we want to cache the entire image?
+      # Bound channels independently.
       images = self.image[self.time_param, :, self.z_param]
+      for i, bound in enumerate(self.intensities_bounds):
+        images[i] = skimage.exposure.rescale_intensity(images[i], in_range=bound)
+
+      # Create the composite image.
       colors = self.COMPOSITE_COLORS[:self.image_channel]
       frame = create_composite(images, colors)
 
@@ -212,7 +234,6 @@ class ImageViewer(param.Parameterized):
 
     elif self.color_mode_param == "Single":
       frame = self.image[self.time_param, channel_index, self.z_param]
-      images = frame
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
@@ -230,6 +251,26 @@ class ImageViewer(param.Parameterized):
 
     self._plot_frame(frame, metadata)
 
+  @param.depends('channel_param', watch=True)
+  def _update_intensities_slider_bounds(self):
+    """Update intensities slider bounds.
+    """
+    channe_index = self._get_channel_index()
+    self.param.intensities_param.bounds = (self.image_min[channe_index], self.image_max[channe_index])
+    self.intensities_param = self.intensities_bounds[channe_index]
+
+  @param.depends('intensities_param', watch=True)
+  def _update_intensities_range(self):
+    """Update intensities range.
+    """
+    channe_index = self._get_channel_index()
+    self.intensities_bounds[channe_index] = tuple(self.intensities_param)
+    self.color_mapper.low = self.intensities_bounds[channe_index][0]
+    self.color_mapper.high = self.intensities_bounds[channe_index][1]
+
+    if self.color_mode_param == "Composite":
+      self._update_image_view()
+
   @param.depends('color_mode_param', watch=True)
   def _change_color_mode(self):
     """Update viewer to match the new color mode.
@@ -244,8 +285,7 @@ class ImageViewer(param.Parameterized):
     TODO: ideally we won't have to recreate the entire image but only
     update the colormap. See https://github.com/bokeh/bokeh/issues/8991
     """
-    self._create_figure()
-    self._update_image_view()
+    self.color_mapper.palette = self.palettes[str(self.colormap_param).lower()]
 
   def _get_image_info(self):
     """Get image informations about dimensions and current position
@@ -266,16 +306,6 @@ class ImageViewer(param.Parameterized):
     infos = pd.DataFrame(infos, columns=['Dimension', 'Size', 'Position'])
     return infos.to_html(index=False)
 
-  def _get_color_bar(self):
-    # if self.color_bar:
-    #   cbar_fig = plotting.figure(tools="",  toolbar_location=None, min_border=0, outline_line_color=None, height=self.fig.height)
-    #   cbar_fig.add_layout(self.color_bar)
-    #   bar_container = pn.Row(cbar_fig, width_policy='min', height_policy='min')
-    #   return None
-    # else:
-    #   return None
-    return None
-
   def panel(self):
     """The image viewer as a panel to display.
     """
@@ -290,7 +320,7 @@ class ImageViewer(param.Parameterized):
 
     # Organize the widgets and containers to the final UI.
     tool_widget = pn.Column(info_widget, parameters_widget)
-    image_container = pn.Row(self._get_fig, self._get_color_bar, sizing_mode='scale_both')
+    image_container = pn.Row(self._get_fig, sizing_mode='scale_both')
 
     content_container = pn.Row(tool_widget, image_container)
     main = pn.Column(content_container, self.log.panel(), css_classes=[f'viewer-{self.viewer_id}'], sizing_mode='scale_both')
