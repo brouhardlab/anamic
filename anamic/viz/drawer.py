@@ -2,6 +2,7 @@ import pandas as pd
 import param
 import bokeh as bk
 
+
 def get_markers():
   markers = {}
   markers['asterisk'] = bk.models.markers.Asterisk
@@ -20,6 +21,26 @@ def get_markers():
   markers['riangle'] = bk.models.markers.Triangle
   markers['x'] = bk.models.markers.X
   return markers
+
+
+def get_default_values(name):
+
+  default_values = {}
+  default_values['line_alpha'] = 1
+  default_values['line_color'] = 'black'
+  default_values['line_width'] = 1
+
+  default_values['fill_alpha'] = 1
+  default_values['fill_color'] = 'black'
+
+  default_values['size'] = 10
+  default_values['radius'] = None
+  default_values['angle'] = 0
+
+  if name not in default_values.keys():
+    return None
+
+  return default_values[name]
 
 
 class ObjectDrawer(param.Parameterized):
@@ -43,6 +64,28 @@ class ObjectDrawer(param.Parameterized):
     self.cursor['channel_index'] = 0
     self.cursor['z_index'] = 0
 
+    self._init_glyph()
+
+  def _init_glyph(self):
+    for name, mark_obj in get_markers().items():
+      # Create glyph object.
+      args = {arg: arg for arg in mark_obj.dataspecs()}
+      glyph = mark_obj(**args)
+
+      # Create source data with empty vectors.
+      empty_data = {arg: [] for arg in mark_obj.dataspecs()}
+      source = bk.models.ColumnDataSource(empty_data)
+
+      # Create the filter.
+      index_filter = bk.models.IndexFilter([])
+      view = bk.models.CDSView(source=source, filters=[index_filter])
+
+      # Add glyph to the figure.
+      renderer = self.fig.add_glyph(source, glyph, view=view)
+
+      self.renderers[name] = renderer
+      self.data[name] = pd.DataFrame()
+
   def _clear_columns(self, data):
     """Remove uneeded columns of a DataFrame when feeding to a
     Bokeh glyph.
@@ -61,26 +104,38 @@ class ObjectDrawer(param.Parameterized):
     self.draw_markers()
 
   def add_markers(self, datum, marker='circle'):
-    marker_obj = get_markers()[marker]
+    self.data[marker] = pd.concat([self.data[marker], datum], ignore_index=True, sort=False)
 
-    # Create a new data source and associated glyph.
-    if marker not in self.renderers.keys():
-      self.data[marker] = datum
+    source = self.renderers[marker].data_source
 
-      # Create a new glyph for this marker.
-      glyph_args = {name: name for name in self._clear_columns(datum)}
-      glyph = marker_obj(**glyph_args)
-
-      source = bk.models.ColumnDataSource(datum)
-      index_filter = bk.models.IndexFilter([])
-      view = bk.models.CDSView(source=source, filters=[index_filter])
-      self.renderers[marker] = self.fig.add_glyph(source, glyph, view=view)
-
-    # Add new data to the existing source.
+    # Get the length of the current source data.
+    if source.column_names:
+      n = len(source.data[source.column_names[0]])
     else:
-      self.data[marker] = pd.concat([self.data[marker], datum], ignore_index=True)
-      self.renderers[marker].data_source.stream(datum)
+      n = 0
 
+    datum = datum.reset_index()
+
+    # Add missing columns to the source data.
+    for col in datum.columns:
+      if col not in source.column_names:
+        # For the exisitng rows we set the default values
+        # to None. In the future, we might want
+        # to have a list of defined default
+        # values according to the name of the column.
+        values = [get_default_values(col)] * n
+        source.add(values, col)
+
+    # Before streaming, we add missing columns with
+    # default values to the new data.
+    for col in source.column_names:
+      if col not in datum.columns:
+        datum[col] = [get_default_values(col)] * datum.shape[0]
+
+    # Add the new data to the source.
+    source.stream(datum)
+
+    # Draw markers.
     self.draw_markers()
 
   def draw_markers(self):
@@ -102,6 +157,8 @@ class ObjectDrawer(param.Parameterized):
       # Replace the indices of the filter for the markers to draw.
       renderer.view.filters[0].indices = list(data_view.index.values)
 
+    self.log.info(self.renderers["circle"].view.filters[0].indices)
+
   def clear(self, name=None):
     """Clear all glyphs. If name is provided only remove glyphs for this type."""
     if name:
@@ -114,6 +171,7 @@ class ObjectDrawer(param.Parameterized):
           self.fig.renderers.remove(renderer)
       self.renderers = {}
       self.data = {}
+    self._init_glyph()
 
   def update_fig(self, fig):
     """Call this method whenever the figure is a new instance.
