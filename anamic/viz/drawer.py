@@ -4,6 +4,9 @@ import bokeh as bk
 
 
 def get_markers():
+  """TODO: Get full list here,
+  https://github.com/bokeh/bokeh/blob/e78a5cab7881ad68e5a32d8f38ce5c4c871e2dfe/examples/models/file/glyphs.py
+  """
   markers = {}
   markers['asterisk'] = bk.models.markers.Asterisk
   markers['circle'] = bk.models.markers.Circle
@@ -85,6 +88,12 @@ class ObjectDrawer(param.Parameterized):
 
       self.renderers[name] = renderer
       self.data[name] = pd.DataFrame()
+
+    # Add the associated tooltips.
+    tooltips = [('x', '@x'), ('y', '@y')]
+    renderers = list(self.renderers.values())
+    hover_tool = bk.models.tools.HoverTool(tooltips=tooltips, renderers=renderers)
+    self.fig.add_tools(hover_tool)
 
   def _clear_columns(self, data):
     """Remove uneeded columns of a DataFrame when feeding to a

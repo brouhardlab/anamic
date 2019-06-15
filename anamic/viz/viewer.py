@@ -140,21 +140,9 @@ class ImageViewer(param.Parameterized):
 
     self.source = bk.models.ColumnDataSource(data={})
 
-    image_tooltips = []
-    image_tooltips.append(('x, y', '$x{0,0.00}, $y{0,0.00}'))
-    if self.image_time > 1:
-      image_tooltips.append(('Time', '@time'))
-    if self.image_z > 1:
-      image_tooltips.append(('Z', '@z'))
-    if self.image_channel > 1:
-      image_tooltips.append(('Channel', '@channel'))
-
-    values = ", ".join([f'@channel_{i}' for i in range(self.image_channel)])
-    image_tooltips.append(('Values', values))
-
     figure_args = {}
-    figure_args['tools'] = ["pan", "wheel_zoom", "box_zoom", "save", "reset"]
-    figure_args['tooltips'] = image_tooltips
+    figure_args['tools'] = ["pan", "wheel_zoom", "box_zoom", "save",
+                            "zoom_in", "zoom_out", "reset"]
     figure_args['active_scroll'] = "wheel_zoom"
     figure_args['match_aspect'] = True
     figure_args['sizing_mode'] = 'stretch_both'
@@ -164,6 +152,8 @@ class ImageViewer(param.Parameterized):
       figure_args['y_range'] = self.fig.y_range
 
     self.fig = plotting.figure(**figure_args)
+
+    # Configure the figure.
     self.fig.toolbar.logo = None
     self.fig.tools[2].match_aspect = True
 
@@ -176,7 +166,7 @@ class ImageViewer(param.Parameterized):
     image_args['source'] = self.source
 
     if self.color_mode_param == "Composite":
-      self.fig.image_rgba(**image_args)
+      self.image_renderer = self.fig.image_rgba(**image_args)
       self.color_bar = None
 
     elif self.color_mode_param == "Single":
@@ -185,7 +175,7 @@ class ImageViewer(param.Parameterized):
       palette = self.palettes[str(self.colormap_param).lower()]
 
       self.color_mapper = bk.models.LinearColorMapper(low=bounds[0], high=bounds[1], palette=palette)
-      self.fig.image(color_mapper=self.color_mapper, **image_args)
+      self.image_renderer = self.fig.image(color_mapper=self.color_mapper, **image_args)
 
       # Add colorbar
       self.color_bar = bk.models.ColorBar(color_mapper=self.color_mapper, location=(0, 0))
@@ -193,6 +183,22 @@ class ImageViewer(param.Parameterized):
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
+
+    # Add tolltips for the image.
+    image_tooltips = []
+    image_tooltips.append(('x, y', '$x{0,0.00}, $y{0,0.00}'))
+    if self.image_time > 1:
+      image_tooltips.append(('Time', '@time'))
+    if self.image_z > 1:
+      image_tooltips.append(('Z', '@z'))
+    if self.image_channel > 1:
+      image_tooltips.append(('Channel', '@channel'))
+    values = ", ".join([f'@channel_{i}' for i in range(self.image_channel)])
+    image_tooltips.append(('Values', values))
+
+    self.image_hover_tool = bk.models.tools.HoverTool(tooltips=image_tooltips,
+                                                      renderers=[self.image_renderer])
+    self.fig.add_tools(self.image_hover_tool)
 
     # Set figure aspect ratio and padding.
     self.fig.x_range.range_padding = 0
