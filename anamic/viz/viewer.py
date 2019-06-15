@@ -23,6 +23,8 @@ class ImageViewer(param.Parameterized):
       dimension_order: str, the current order of dimension of the image. None
         assumes the dimensions to be 'XY', 'TXY', 'TCXY' or 'TCZXY'.
       enable_log: bool, whether displaying a logging widget.
+      width: int, width of the viewer.
+      height: int, height of the viewer.
   """
 
   COMPOSITE_COLORS = ['red', 'green', 'cyan', 'magenta', 'yellow']
@@ -37,8 +39,11 @@ class ImageViewer(param.Parameterized):
   color_mode_param = param.ObjectSelector(default="Single", objects=["Single", "Composite"])
   colormap_param = param.ObjectSelector()
 
-  def __init__(self, image, dimension_order=None, enable_log=True, _drawer_class=ObjectDrawer, **kwargs):
+  def __init__(self, image, dimension_order=None, enable_log=True, width=None, height=None, _drawer_class=ObjectDrawer, **kwargs):
     super().__init__(**kwargs)
+
+    self.width = width
+    self.height = height
 
     # Reshape the image
     self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
@@ -126,10 +131,7 @@ class ImageViewer(param.Parameterized):
     """
     css = {}
     css[f'.viewer-{self.viewer_id}'] = {}
-    # css[f'.viewer-{self.viewer_id}']['border'] = '1px #5d5d5d solid !important'
-    #css[f'.viewer-{self.viewer_id}']['min-width'] = '100% !important'
-    #css[f'.viewer-{self.viewer_id}']['min-height'] = '100% !important'
-
+    css[f'.viewer-{self.viewer_id}']['border'] = '1px #9d9d9d solid !important'
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
 
@@ -331,12 +333,30 @@ class ImageViewer(param.Parameterized):
     info_widget = self._get_image_info
 
     # Widget with parameter widgets to control image viewer.
-    parameters_widget = pn.Param(self.param, parameters=self.active_param_widgets, widgets=self.param_widgets)
+    parameters_widget = pn.Param(self.param,
+                                 parameters=self.active_param_widgets,
+                                 widgets=self.param_widgets)
 
     # Organize the widgets and containers to the final UI.
     tool_widget = pn.Column(info_widget, parameters_widget)
     image_container = pn.Row(self._get_fig, sizing_mode='scale_both')
 
-    content_container = pn.Row(tool_widget, image_container)
-    main = pn.Column(content_container, self.log.panel(), css_classes=[f'viewer-{self.viewer_id}'], sizing_mode='scale_both')
-    return main
+    content_container = pn.Row(tool_widget, image_container, margin=8)
+
+    main_pane_args = {}
+    main_pane_args['css_classes'] = [f'viewer-{self.viewer_id}']
+    main_pane_args['margin'] = 0
+
+    if self.width and self.height:
+      main_pane_args['width'] = self.width
+      main_pane_args['height'] = self.height
+    elif self.width:
+      main_pane_args['width'] = self.width
+      main_pane_args['sizing_mode'] = 'scale_height'
+    elif self.height:
+      main_pane_args['height'] = self.height
+      main_pane_args['sizing_mode'] = 'scale_width'
+    else:
+      main_pane_args['sizing_mode'] = 'scale_both'
+
+    return pn.Column(content_container, self.log.panel(), **main_pane_args)

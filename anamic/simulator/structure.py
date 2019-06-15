@@ -119,6 +119,7 @@ def get_dimer_positions(dimers, show_progress=False):
     positions[array_index:array_index + n_pf] = current_row
 
   positions = pd.DataFrame(positions, columns=columns)
+  positions['visible'] = positions['visible'].astype('bool')
   return positions
 
 

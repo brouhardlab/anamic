@@ -175,7 +175,7 @@ class MicrotubuleSimulator():
     y_bins = np.arange(y_min - self.parameters['y_offset'], y_max + self.parameters['y_offset'], self.parameters['pixel_size'])
 
     # Select visible and labeled dimers
-    selected_dimers = self.positions[(self.positions['visible'] is True) and (self.positions['labeled'] is True)]
+    selected_dimers = self.positions[self.positions['visible'] & self.positions['labeled']]
 
     # Bin dimers positions to a 2D grid (defined by pixel_size)
     self.discrete_image, _, _ = np.histogram2d(selected_dimers['x_proj_rotated'],
@@ -285,7 +285,7 @@ class MicrotubuleSimulator():
     if show_all:
       ax = axs[0] if show_labeled else ax
       # Visualize all dimers
-      selected_dimers = self.positions[(self.positions['visible'] is True)]
+      selected_dimers = self.positions[self.positions['visible']]
       viz.viz_2d_dimers_positions(ax, selected_dimers,
                                   x_feature=x_feature, y_feature=y_feature,
                                   color_feature=color_feature, marker_size=marker_size,
@@ -294,7 +294,7 @@ class MicrotubuleSimulator():
     if show_labeled:
       ax = axs[1] if show_all else ax
       # Visualize only labeled dimers
-      selected_dimers = self.positions[(self.positions['visible'] is True) and (self.positions['labeled'] is True)]
+      selected_dimers = self.positions[self.positions['visible'] & self.positions['labeled']]
       viz.viz_2d_dimers_positions(axs[1], selected_dimers,
                                   x_feature=x_feature, y_feature=y_feature,
                                   color_feature=color_feature, marker_size=marker_size,

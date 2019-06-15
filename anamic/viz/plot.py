@@ -22,11 +22,12 @@ def viz_dimers(dimers, start_row=0, grid=True):
   return fig
 
 
+# pylint: disable=too-many-locals
 def viz_dimer_positions(positions, size=5, cmap_name="tab20c", color_feature_name=None):
   import ipyvolume as ipv
 
   # Only show visible dimers
-  selected_dimers = positions[positions['visible'] is True]
+  selected_dimers = positions[positions['visible']]
 
   x, y, z = selected_dimers[['x', 'y', 'z']].values.astype('float').T
 
@@ -37,8 +38,9 @@ def viz_dimer_positions(positions, size=5, cmap_name="tab20c", color_feature_nam
     color_indices = cmap([i / len(categories) for i in categories])
 
     color = np.zeros((len(selected_dimers[color_feature_name]), 4))
-    for color_index in enumerate(categories):
-      color[selected_dimers[color_feature_name] == categories[color_index]] = color_indices[color_index]
+    for color_index, _ in enumerate(categories):
+      mask = selected_dimers[color_feature_name] == categories[color_index]
+      color[mask] = color_indices[color_index]
   else:
     color = '#e4191b'
 
