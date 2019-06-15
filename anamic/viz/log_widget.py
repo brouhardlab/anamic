@@ -57,24 +57,27 @@ class LoggingWidget():
   def _set_css(self):
     css = {}
     css[f'.log-widget-container-{self.widget_id}'] = {}
-    css[f'.log-widget-container-{self.widget_id}']['background'] = '#fbfbfb'
+    css[f'.log-widget-container-{self.widget_id}']['background'] = '#f4f4f4'
     css[f'.log-widget-container-{self.widget_id}']['border'] = '1px #eaeaea solid !important'
-    css[f'.log-widget-container-{self.widget_id}']['overflow-y'] = 'auto'
+    css[f'.log-widget-container-{self.widget_id}']['overflow-y'] = 'scroll'
     css[f'.log-widget-container-{self.widget_id}']['border-radius'] = '0'
-    css[f'.log-widget-container-{self.widget_id}']['margin'] = '10px !important'
-    css[f'.log-widget-container-{self.widget_id}']['resize'] = 'both'
-    css[f'.log-widget-container-{self.widget_id}']['min-width'] = '95% !important'
+    css[f'.log-widget-container-{self.widget_id}']['margin-left'] = '0.5% !important'
+    css[f'.log-widget-container-{self.widget_id}']['margin-right'] = '0.5% !important'
+    css[f'.log-widget-container-{self.widget_id}']['margin-top'] = '0px'
+    css[f'.log-widget-container-{self.widget_id}']['margin-bottom'] = '0px'
+    css[f'.log-widget-container-{self.widget_id}']['min-width'] = '97% !important'
+    css[f'.log-widget-container-{self.widget_id}']['max-width'] = '97% !important'
     css[f'.log-widget-{self.widget_id}'] = {}
-    #css[f'.log-widget-{self.widget_id}']['min-width'] = '100%'
+    #css[f'.log-widget-{self.widget_id}']['min-width'] = '60% !important'
 
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
 
   def _get_log_widget(self):
     if self.enable:
-      return pn.Column(self.widget, height=150,
-                       css_classes=[f'log-widget-container-{self.widget_id}'],
-                       sizing_mode='stretch_width')
+      return pn.layout.WidgetBox(self.widget, height=180, margin=5,
+                                 css_classes=[f'log-widget-container-{self.widget_id}'],
+                                 sizing_mode='stretch_width')
     return None
 
   def panel(self):
