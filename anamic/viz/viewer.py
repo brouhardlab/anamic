@@ -40,20 +40,26 @@ class ImageViewer(param.Parameterized):
   color_mode_param = param.ObjectSelector(default="Single", objects=["Single", "Composite"])
   colormap_param = param.ObjectSelector()
 
-  def __init__(self, image, dimension_order=None, enable_log=True, width=None, height=None, _drawer_class=ObjectDrawer, **kwargs):
+  # pylint: disable=too-many-statements
+  def __init__(self, image, dimension_order=None, enable_log=True, width=None,
+               height=None, _drawer_class=ObjectDrawer, **kwargs):
     super().__init__(**kwargs)
-
-    self.width = width
-    self.height = height
-
-    # Reshape the image
-    self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
 
     # Get an ID for this viewer's instance
     self.viewer_id = id(self)
 
     # Setup the logger
     self.log = LoggingWidget(logger_name=f"Imageviewer-{self.viewer_id}", enable=enable_log)
+
+    if image.dtype.name == 'float64':
+      image = image.astype('float32')
+      self.log.warning("Image of type 'float64' have been converted to 'float32'")
+
+    self.width = width
+    self.height = height
+
+    # Reshape the image
+    self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
 
     # Get image informations.
     self.image_time = self.image.shape[0]
@@ -132,7 +138,7 @@ class ImageViewer(param.Parameterized):
     """
     css = {}
     css[f'.viewer-{self.viewer_id}'] = {}
-    #css[f'.viewer-{self.viewer_id}']['border'] = '1px #9d9d9d solid !important'
+    # css[f'.viewer-{self.viewer_id}']['border'] = '1px #9d9d9d solid !important'
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
 
@@ -283,8 +289,11 @@ class ImageViewer(param.Parameterized):
     """Update intensities slider bounds.
     """
     channe_index = self._get_channel_index()
-    #self.param.intensities_param.bounds = (self.image_min[channe_index], self.image_max[channe_index])
-    self.param.intensities_param.bounds = (np.iinfo(self.image.dtype).min, np.iinfo(self.image.dtype).max)
+    if self.image.dtype.kind == 'f':
+      bounds = np.finfo(self.image.dtype).min, np.finfo(self.image.dtype).max
+    else:
+      bounds = np.iinfo(self.image.dtype).min, np.iinfo(self.image.dtype).max
+    self.param.intensities_param.bounds = bounds
     self.intensities_param = self.intensities_bounds[channe_index]
 
   @param.depends('intensities_param', watch=True)

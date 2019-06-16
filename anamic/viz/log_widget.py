@@ -25,7 +25,7 @@ class LoggingWidget():
   def error(self, message):
     self.log.error(str(message))
 
-  def warn(self, message):
+  def warning(self, message):
     self.log.warning(str(message))
 
   def critical(self, message):

@@ -26,5 +26,5 @@ class TestImageViewer(unittest.TestCase):
 def test_image_viewer_init():
   image = np.random.random((15, 15, 15, 15, 15))
   viewer = anamic.viz.ImageViewer(image=image, dimension_order='TCZXY')
-  assert isinstance(viewer.panel(), pn.layout.ListPanel)
+  assert isinstance(viewer.panel(), pn.GridSpec)
   # TODO: maybe it's possible to more checks about the UI.
