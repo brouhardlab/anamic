@@ -4,9 +4,6 @@ import bokeh as bk
 
 
 def get_markers():
-  """TODO: Get full list here,
-  https://github.com/bokeh/bokeh/blob/e78a5cab7881ad68e5a32d8f38ce5c4c871e2dfe/examples/models/file/glyphs.py
-  """
   markers = {}
   markers['asterisk'] = bk.models.markers.Asterisk
   markers['circle'] = bk.models.markers.Circle
@@ -147,6 +144,8 @@ class ObjectDrawer(param.Parameterized):
     # Draw markers.
     self.draw_markers()
 
+    self.log.info(f'{datum.shape[0]} marker(s) of type "{marker}" have been added.')
+
   def draw_markers(self):
     """Draw markers for the current cursor."""
 
@@ -165,8 +164,6 @@ class ObjectDrawer(param.Parameterized):
 
       # Replace the indices of the filter for the markers to draw.
       renderer.view.filters[0].indices = list(data_view.index.values)
-
-    self.log.info(self.renderers["circle"].view.filters[0].indices)
 
   def clear(self, name=None):
     """Clear all glyphs. If name is provided only remove glyphs for this type."""
@@ -190,3 +187,8 @@ class ObjectDrawer(param.Parameterized):
     self.clear()
     for name, datum in data.items():
       self.add_markers(datum, name)
+
+  def panel(self):
+    source = self.renderers['circle'].data_source
+    table_widget = bk.models.widgets.DataTable(source=source)
+    return table_widget

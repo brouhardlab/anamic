@@ -57,28 +57,27 @@ class LoggingWidget():
   def _set_css(self):
     css = {}
     css[f'.log-widget-container-{self.widget_id}'] = {}
+    css[f'.log-widget-container-{self.widget_id}']['width'] = '98% !important'
     css[f'.log-widget-container-{self.widget_id}']['background'] = '#f4f4f4'
     css[f'.log-widget-container-{self.widget_id}']['border'] = '1px #eaeaea solid !important'
     css[f'.log-widget-container-{self.widget_id}']['overflow-y'] = 'scroll'
+    css[f'.log-widget-container-{self.widget_id}']['overflow-x'] = 'hidden'
     css[f'.log-widget-container-{self.widget_id}']['border-radius'] = '0'
-    css[f'.log-widget-container-{self.widget_id}']['margin-left'] = '0.5% !important'
-    css[f'.log-widget-container-{self.widget_id}']['margin-right'] = '0.5% !important'
-    css[f'.log-widget-container-{self.widget_id}']['margin-top'] = '0px'
-    css[f'.log-widget-container-{self.widget_id}']['margin-bottom'] = '0px'
-    css[f'.log-widget-container-{self.widget_id}']['min-width'] = '97% !important'
-    css[f'.log-widget-container-{self.widget_id}']['max-width'] = '97% !important'
     css[f'.log-widget-{self.widget_id}'] = {}
-    #css[f'.log-widget-{self.widget_id}']['min-width'] = '60% !important'
+    css[f'.log-widget-{self.widget_id}']['width'] = '100% !important'
 
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
 
-  def _get_log_widget(self):
+  def _get_log_widget(self, height=250):
     if self.enable:
-      return pn.layout.WidgetBox(self.widget, height=180, margin=5,
-                                 css_classes=[f'log-widget-container-{self.widget_id}'],
-                                 sizing_mode='stretch_width')
+      return pn.Column(pn.pane.Markdown('## Logging'),
+                       self.widget,
+                       min_height=height,
+                       max_height=height,
+                       sizing_mode='stretch_both',
+                       css_classes=[f'log-widget-container-{self.widget_id}'])
     return None
 
-  def panel(self):
-    return self._get_log_widget()
+  def panel(self, height=250):
+    return self._get_log_widget(height=height)

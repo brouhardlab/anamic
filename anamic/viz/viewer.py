@@ -10,6 +10,7 @@ from anamic.utils import css_dict_to_string
 from anamic.imaging import reorder_image_dimensions
 from anamic.imaging import create_composite
 from anamic.imaging import get_palettes
+
 from .log_widget import LoggingWidget
 from .drawer import ObjectDrawer
 
@@ -131,7 +132,7 @@ class ImageViewer(param.Parameterized):
     """
     css = {}
     css[f'.viewer-{self.viewer_id}'] = {}
-    css[f'.viewer-{self.viewer_id}']['border'] = '1px #9d9d9d solid !important'
+    #css[f'.viewer-{self.viewer_id}']['border'] = '1px #9d9d9d solid !important'
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
 
@@ -282,7 +283,8 @@ class ImageViewer(param.Parameterized):
     """Update intensities slider bounds.
     """
     channe_index = self._get_channel_index()
-    self.param.intensities_param.bounds = (self.image_min[channe_index], self.image_max[channe_index])
+    #self.param.intensities_param.bounds = (self.image_min[channe_index], self.image_max[channe_index])
+    self.param.intensities_param.bounds = (np.iinfo(self.image.dtype).min, np.iinfo(self.image.dtype).max)
     self.intensities_param = self.intensities_bounds[channe_index]
 
   @param.depends('intensities_param', watch=True)
@@ -318,6 +320,7 @@ class ImageViewer(param.Parameterized):
         infos: A Pandas dataframe converted to HTML code.
     """
     infos = []
+    infos.append(('Image Type', self.image.dtype.name, ""))
     infos.append(('X', self.image_width, ""))
     infos.append(('Y', self.image_height, ""))
     if self.image_z > 1:
@@ -325,7 +328,11 @@ class ImageViewer(param.Parameterized):
     if self.image_time > 1:
       infos.append(('Time', self.image_time, self.time_param))
     if self.image_channel > 1:
-      infos.append(('Channel', self.image_channel, self.channel_names.index(self.channel_param)))
+      if self.channel_param:
+        channel_index = self.channel_param
+      else:
+        channel_index = 'Channel 0'
+      infos.append(('Channel', self.image_channel, self.channel_names.index(channel_index)))
     infos = pd.DataFrame(infos, columns=['Dimension', 'Size', 'Position'])
     return infos.to_html(index=False)
 
@@ -337,18 +344,27 @@ class ImageViewer(param.Parameterized):
 
     # Widget to show image informations.
     info_widget = self._get_image_info
+    info_container = pn.Column(pn.pane.Markdown('## Informations'), info_widget)
 
     # Widget with parameter widgets to control image viewer.
     parameters_widget = pn.Param(self.param,
+                                 show_name=False,
                                  parameters=self.active_param_widgets,
-                                 widgets=self.param_widgets)
+                                 widgets=self.param_widgets,
+                                 sizing_mode='scale_both')
+    parameters_widget = pn.WidgetBox(parameters_widget)
+    parameters_container = pn.Column(pn.pane.Markdown('## Viewer Configurations'), parameters_widget)
 
-    # Organize the widgets and containers to the final UI.
-    tool_widget = pn.Column(info_widget, parameters_widget)
-    image_container = pn.Row(self._get_fig, sizing_mode='scale_both')
+    # Assemble informations and parameters widgets.
+    tools_widget = pn.Column(info_container, parameters_container)
 
-    content_container = pn.Row(tool_widget, image_container, margin=8)
+    # Image container
+    image_container = pn.Row(self._get_fig)
 
+    # Log container
+    log_container = self.log.panel(height=200)
+
+    # Viewer layout
     main_pane_args = {}
     main_pane_args['css_classes'] = [f'viewer-{self.viewer_id}']
     main_pane_args['margin'] = 0
@@ -358,11 +374,18 @@ class ImageViewer(param.Parameterized):
       main_pane_args['height'] = self.height
     elif self.width:
       main_pane_args['width'] = self.width
-      main_pane_args['sizing_mode'] = 'scale_height'
+      main_pane_args['sizing_mode'] = 'stretch_height'
     elif self.height:
       main_pane_args['height'] = self.height
-      main_pane_args['sizing_mode'] = 'scale_width'
+      main_pane_args['sizing_mode'] = 'stretch_width'
     else:
       main_pane_args['sizing_mode'] = 'scale_both'
 
-    return pn.Column(content_container, self.log.panel(), **main_pane_args)
+    gspec = pn.GridSpec(**main_pane_args)
+
+    gspec[0, :1] = tools_widget
+    gspec[0, 1:20] = image_container
+    #gspec[1, :20] = viewer.drawer.panel()
+    gspec[1, :20] = log_container
+
+    return gspec
