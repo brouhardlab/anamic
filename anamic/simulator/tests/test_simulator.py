@@ -8,15 +8,6 @@ root_dir = Path(__file__).parent
 data_dir = root_dir / "data"
 
 
-def test_dimers_builder():
-  n_pf = 11
-  mt_length_nm = 100  # nm
-  taper_length_nm = 50  # nm
-  dimers = anamic.simulator.dimers_builder(n_pf, mt_length_nm, taper_length_nm)
-  assert dimers.shape == (11, 12)
-  assert dimers.sum() < 132
-
-
 def test_mt_simulator():
   n_pf = 11
   mt_length_nm = 100  # nm

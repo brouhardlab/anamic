@@ -58,6 +58,7 @@ class ObjectDrawer(param.Parameterized):
 
     self.renderers = {}
     self.data = {}
+    self.source = []
 
     self.cursor = {}
     self.cursor['time_index'] = 0
@@ -144,7 +145,8 @@ class ObjectDrawer(param.Parameterized):
     # Draw markers.
     self.draw_markers()
 
-    self.log.info(f'{datum.shape[0]} marker(s) of type "{marker}" have been added.')
+    if datum.shape[0] > 0:
+      self.log.info(f'{datum.shape[0]} marker(s) of type "{marker}" have been added.')
 
   def draw_markers(self):
     """Draw markers for the current cursor."""
