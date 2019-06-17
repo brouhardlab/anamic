@@ -241,12 +241,10 @@ class ImageViewer(param.Parameterized):
     self.fig.add_tools(self.image_hover_tool)
 
     self._update_image_view()
-    self._update_fig()
 
     # Tell the drawer the figure is new
     if self.drawer:
       self.drawer.update_fig(self.fig, self.fig_pane)
-      self._update_fig()
 
   def _get_fig(self):
     return self.fig_pane
@@ -319,7 +317,6 @@ class ImageViewer(param.Parameterized):
       self.drawer.draw()
 
     self._plot_frame(frame, metadata)
-    self._update_fig()
 
   @param.depends('channel_param', watch=True)
   def _update_intensities_slider_bounds(self):
@@ -329,7 +326,6 @@ class ImageViewer(param.Parameterized):
     self.intensities_param = self.intensities_bounds[channel_index]
     self._update_intensities_range()
     self.param.trigger('intensities_param')
-    self._update_fig()
 
   @param.depends('intensities_param', watch=True)
   def _update_intensities_range(self):
@@ -345,8 +341,6 @@ class ImageViewer(param.Parameterized):
 
     if self.color_mode_param == "Composite":
       self._update_image_view()
-
-    self._update_fig()
 
   @param.depends('color_mode_param', watch=True)
   def _change_color_mode(self):
