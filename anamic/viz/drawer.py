@@ -43,6 +43,7 @@ def get_default_values(name):
   return default_values[name]
 
 
+# pylint: disable=too-many-instance-attributes
 class ObjectDrawer(param.Parameterized):
   """Draw objects on a Bokeh figure.
 
@@ -51,14 +52,16 @@ class ObjectDrawer(param.Parameterized):
     log: Python logger
   """
 
-  def __init__(self, fig, log, **kwargs):
+  def __init__(self, fig, fig_pane, log, **kwargs):
     super().__init__(**kwargs)
     self.fig = fig
+    self.fig_pane = fig_pane
     self.log = log
 
     self.renderers = {}
     self.data = {}
     self.source = []
+    self.hover_tool = None
 
     self.cursor = {}
     self.cursor['time_index'] = 0
@@ -68,6 +71,9 @@ class ObjectDrawer(param.Parameterized):
     self._init_glyph()
 
   def _init_glyph(self):
+    self._init_markers()
+
+  def _init_markers(self):
     for name, mark_obj in get_markers().items():
       # Create glyph object.
       args = {arg: arg for arg in mark_obj.dataspecs()}
@@ -88,10 +94,13 @@ class ObjectDrawer(param.Parameterized):
       self.data[name] = pd.DataFrame()
 
     # Add the associated tooltips.
+    if self.hover_tool and self.hover_tool in self.fig.tools:
+      self.fig.tools.remove(self.hover_tool)
+
     tooltips = [('x', '@x'), ('y', '@y')]
     renderers = list(self.renderers.values())
-    hover_tool = bk.models.tools.HoverTool(tooltips=tooltips, renderers=renderers)
-    self.fig.add_tools(hover_tool)
+    self.hover_tool = bk.models.tools.HoverTool(tooltips=tooltips, renderers=renderers)
+    self.fig.add_tools(self.hover_tool)
 
   def _clear_columns(self, data):
     """Remove uneeded columns of a DataFrame when feeding to a
@@ -110,7 +119,7 @@ class ObjectDrawer(param.Parameterized):
   def draw(self):
     self.draw_markers()
 
-  def add_markers(self, datum, marker='circle'):
+  def add_markers(self, datum, marker='circle', log=True):
     self.data[marker] = pd.concat([self.data[marker], datum], ignore_index=True, sort=False)
 
     source = self.renderers[marker].data_source
@@ -145,7 +154,7 @@ class ObjectDrawer(param.Parameterized):
     # Draw markers.
     self.draw_markers()
 
-    if datum.shape[0] > 0:
+    if datum.shape[0] > 0 and log:
       self.log.info(f'{datum.shape[0]} marker(s) of type "{marker}" have been added.')
 
   def draw_markers(self):
@@ -165,30 +174,47 @@ class ObjectDrawer(param.Parameterized):
           data_view = data_view[mask]
 
       # Replace the indices of the filter for the markers to draw.
-      renderer.view.filters[0].indices = list(data_view.index.values)
+      index_filter = bk.models.IndexFilter(list(data_view.index.values))
+      renderer.view.filters[0] = index_filter
+
+    try:
+      self.fig_pane.param.trigger('object')
+    except KeyError:
+      pass
+
+  def _clear_marker(self, name):
+    mark_obj = get_markers()[name]
+
+    # Clear data source.
+    empty_data = {arg: [] for arg in mark_obj.dataspecs()}
+    source = bk.models.ColumnDataSource(empty_data)
+    self.renderers[name].data_source = source
+
+    # Reset data filter
+    index_filter = bk.models.IndexFilter([])
+    self.renderers[name].view.filters[0] = index_filter
+
+    self.data[name] = pd.DataFrame()
 
   def clear(self, name=None):
     """Clear all glyphs. If name is provided only remove glyphs for this type."""
     if name:
-      self.fig.renderers.remove(self.renderers[name])
-      self.renderers.pop(name)
-      self.data.pop(name)
+      self._clear_marker(name)
     else:
-      for _, renderer in self.renderers.items():
-        if renderer in self.fig.renderers:
-          self.fig.renderers.remove(renderer)
-      self.renderers = {}
-      self.data = {}
-    self._init_glyph()
+      for object_name in self.renderers.keys():
+        self._clear_marker(object_name)
+    self.draw_markers()
 
-  def update_fig(self, fig):
+  def update_fig(self, fig, fig_pane):
     """Call this method whenever the figure is a new instance.
     """
     self.fig = fig
-    data = self.data.copy()
-    self.clear()
-    for name, datum in data.items():
-      self.add_markers(datum, name)
+    self.fig_pane = fig_pane
+    new_renderers = {}
+    for name, renderer in self.renderers.items():
+      renderer = self.fig.add_glyph(renderer.data_source, renderer.glyph, view=renderer.view)
+      new_renderers[name] = renderer
+    self.renderers = new_renderers
 
   def panel(self):
     source = self.renderers['circle'].data_source

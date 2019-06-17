@@ -61,6 +61,15 @@ class ImageViewer(param.Parameterized):
     # Reshape the image
     self.image = reorder_image_dimensions(image, dimension_order=dimension_order)
 
+    # Init attributes
+    self.fig = None
+    self.fig_pane = None
+    self.image_renderer = None
+    self.color_bar = None
+    self.color_mapper = None
+    self.image_hover_tool = None
+    self.drawer = None
+
     # Get image informations.
     self.image_time = self.image.shape[0]
     self.image_channel = self.image.shape[1]
@@ -97,6 +106,12 @@ class ImageViewer(param.Parameterized):
 
     self.param.intensities_param.label = "Intensity Range"
     self.active_param_widgets.append('intensities_param')
+    if self.image.dtype.kind == 'f':
+      bounds = np.finfo(self.image.dtype).min, np.finfo(self.image.dtype).max
+    else:
+      bounds = np.iinfo(self.image.dtype).min, np.iinfo(self.image.dtype).max
+    self.param.intensities_param.bounds = bounds
+    self.intensities_param = self.intensities_bounds[self._get_channel_index()]
 
     self.param.colormap_param.label = "Color Map"
     self.active_param_widgets.append('colormap_param')
@@ -113,12 +128,12 @@ class ImageViewer(param.Parameterized):
     self.param_widgets['color_mode_param'] = pn.widgets.RadioButtonGroup
 
     # Create the Bokeh figure.
-    self.fig = None
-    self.drawer = None
-    self._create_figure()
+    self._init_figure()
+    self._plot_image()
 
     # Init the object drawer
-    self.drawer = _drawer_class(self.fig, self.log)
+    if _drawer_class:
+      self.drawer = _drawer_class(self.fig, self.fig_pane, self.log)
 
     # Trigger first plot update.
     self._update_image_view()
@@ -142,9 +157,9 @@ class ImageViewer(param.Parameterized):
     css_string = css_dict_to_string(css)
     pn.extension(raw_css=[css_string])
 
-  def _create_figure(self):
-    """Create the Bokeh figure to display the image."""
-
+  def _init_figure(self):
+    """Init the Bokeh figure object
+    """
     self.source = bk.models.ColumnDataSource(data={})
 
     figure_args = {}
@@ -159,10 +174,28 @@ class ImageViewer(param.Parameterized):
       figure_args['y_range'] = self.fig.y_range
 
     self.fig = plotting.figure(**figure_args)
+    self.fig_pane = pn.pane.Bokeh(self.fig)
 
     # Configure the figure.
     self.fig.toolbar.logo = None
     self.fig.tools[2].match_aspect = True
+
+    # Set figure aspect ratio and padding.
+    self.fig.x_range.range_padding = 0
+    self.fig.y_range.range_padding = 0
+    self.fig.aspect_ratio = self.image_width / self.image_height
+
+  def _plot_image(self):
+    """Plot the current image and remove the previous one if it exists.
+    """
+
+    if self.fig:
+      if self.image_renderer and self.image_renderer in self.fig.renderers:
+        self.fig.renderers.remove(self.image_renderer)
+      if self.color_bar and self.color_bar in self.fig.renderers:
+        self.fig.renderers.remove(self.color_bar)
+      if self.image_hover_tool and self.image_hover_tool in self.fig.tools:
+        self.fig.tools.remove(self.image_hover_tool)
 
     image_args = {}
     image_args['image'] = 'image'
@@ -177,11 +210,11 @@ class ImageViewer(param.Parameterized):
       self.color_bar = None
 
     elif self.color_mode_param == "Single":
+      if not self.color_mapper:
+        bounds = self.intensities_bounds[self._get_channel_index()]
+        palette = self.palettes[str(self.colormap_param).lower()]
+        self.color_mapper = bk.models.LinearColorMapper(low=bounds[0], high=bounds[1], palette=palette)
 
-      bounds = self.intensities_bounds[self._get_channel_index()]
-      palette = self.palettes[str(self.colormap_param).lower()]
-
-      self.color_mapper = bk.models.LinearColorMapper(low=bounds[0], high=bounds[1], palette=palette)
       self.image_renderer = self.fig.image(color_mapper=self.color_mapper, **image_args)
 
       # Add colorbar
@@ -207,17 +240,20 @@ class ImageViewer(param.Parameterized):
                                                       renderers=[self.image_renderer])
     self.fig.add_tools(self.image_hover_tool)
 
-    # Set figure aspect ratio and padding.
-    self.fig.x_range.range_padding = 0
-    self.fig.y_range.range_padding = 0
-    self.fig.aspect_ratio = self.image_width / self.image_height
+    self._update_image_view()
+    self._update_fig()
 
     # Tell the drawer the figure is new
     if self.drawer:
-      self.drawer.update_fig(self.fig)
+      self.drawer.update_fig(self.fig, self.fig_pane)
+      self._update_fig()
 
   def _get_fig(self):
-    return self.fig
+    return self.fig_pane
+
+  def _update_fig(self):
+    if self.fig_pane:
+      self.fig_pane.param.trigger('object')
 
   def _plot_frame(self, frame, metadata):
     """Update the image Bokeh figure.
@@ -259,7 +295,7 @@ class ImageViewer(param.Parameterized):
       frame = np.insert(frame, 3, 255, axis=2)
 
     elif self.color_mode_param == "Single":
-      frame = self.image[self.time_param, channel_index, self.z_param].copy()
+      frame = self.image[self.time_param, channel_index, self.z_param]
 
     else:
       raise ValueError(f"Invalid color mode: {self.color_mode_param}")
@@ -283,44 +319,51 @@ class ImageViewer(param.Parameterized):
       self.drawer.draw()
 
     self._plot_frame(frame, metadata)
+    self._update_fig()
 
   @param.depends('channel_param', watch=True)
   def _update_intensities_slider_bounds(self):
     """Update intensities slider bounds.
     """
-    channe_index = self._get_channel_index()
-    if self.image.dtype.kind == 'f':
-      bounds = np.finfo(self.image.dtype).min, np.finfo(self.image.dtype).max
-    else:
-      bounds = np.iinfo(self.image.dtype).min, np.iinfo(self.image.dtype).max
-    self.param.intensities_param.bounds = bounds
-    self.intensities_param = self.intensities_bounds[channe_index]
+    channel_index = self._get_channel_index()
+    self.intensities_param = self.intensities_bounds[channel_index]
+    self._update_intensities_range()
+    self.param.trigger('intensities_param')
+    self._update_fig()
 
   @param.depends('intensities_param', watch=True)
   def _update_intensities_range(self):
     """Update intensities range.
+
+    TODO: the widget does not seems to update when switching channels.
     """
-    channe_index = self._get_channel_index()
-    self.intensities_bounds[channe_index] = tuple(self.intensities_param)
-    self.color_mapper.low = self.intensities_bounds[channe_index][0]
-    self.color_mapper.high = self.intensities_bounds[channe_index][1]
+    if self.color_mapper:
+      channel_index = self._get_channel_index()
+      self.intensities_bounds[channel_index] = tuple(self.intensities_param)
+      self.color_mapper.low = self.intensities_bounds[channel_index][0]
+      self.color_mapper.high = self.intensities_bounds[channel_index][1]
 
     if self.color_mode_param == "Composite":
       self._update_image_view()
+
+    self._update_fig()
 
   @param.depends('color_mode_param', watch=True)
   def _change_color_mode(self):
     """Update viewer to match the new color mode.
     """
-    self._create_figure()
-    self._update_image_view()
+    self._init_figure()
+    self._plot_image()
 
   @param.depends('colormap_param', watch=True)
   def _update_colormap(self):
     """Update viewer to match the new colormap.
     """
-    self.color_mapper.palette = self.palettes[str(self.colormap_param).lower()]
+    if self.color_mapper:
+      self.color_mapper.palette = self.palettes[str(self.colormap_param).lower()]
+      self._update_fig()
 
+  @param.depends('time_param', 'channel_param', 'z_param', watch=True)
   def _get_image_info(self):
     """Get image informations about dimensions and current position
     in the viewer.
