@@ -133,9 +133,15 @@ def get_mt_tips(positions, coordinates_features=None):
   indices = np.sort(indexed_positions.index.unique())
 
   first_dimers = indexed_positions.loc[indices[0], coordinates_features]
-  x_start, y_start = first_dimers.mean()
+  if first_dimers.ndim > 1:
+    x_start, y_start = first_dimers.mean()
+  else:
+    x_start, y_start = first_dimers.values
 
   last_dimers = indexed_positions.loc[indices[-1], coordinates_features]
-  x_end, y_end = last_dimers.mean()
+  if last_dimers.ndim > 1:
+    x_end, y_end = last_dimers.mean()
+  else:
+    x_end, y_end = last_dimers.values
 
   return x_start, x_end, y_start, y_end

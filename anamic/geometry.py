@@ -1,4 +1,6 @@
 import numpy as np
+from skimage import draw
+from matplotlib import path
 
 
 def get_point_from_vector(vec, point, distance):
@@ -107,17 +109,49 @@ def get_rectangle_from_middle_line(p1, p2, rectangle_width):
   return corners
 
 
-def get_mask_from_polygon(image, polygon):
+def get_mask_from_polygon(image_shape, polygon, backend='skimage'):
   """Get a mask image of pixels inside the polygon.
 
   Args:
-    image: Numpy array of dimension 2.
+    image_shape: tuple of size 2.
+    polygon: Numpy array of dimension 2 (2xN).
+    backend: str, matplotlib or skimage.
+  """
+  # pylint: disable=no-else-return
+  if backend == 'matplotlib':
+    return get_mask_from_polygon_mpl(image_shape, polygon)
+  elif backend == 'skimage':
+    return get_mask_from_polygon_skimage(image_shape, polygon)
+  return None
+
+
+def get_mask_from_polygon_mpl(image_shape, polygon):
+  """Get a mask image of pixels inside the polygon.
+
+  Args:
+    image_shape: tuple of size 2.
     polygon: Numpy array of dimension 2 (2xN).
   """
-  from matplotlib import path
-  xx, yy = np.meshgrid(np.arange(image.shape[1]), np.arange(image.shape[0]))
+  polygon = np.array(polygon)
+  xx, yy = np.meshgrid(np.arange(image_shape[1]), np.arange(image_shape[0]))
   xx, yy = xx.flatten(), yy.flatten()
   indices = np.vstack((xx, yy)).T
   mask = path.Path(polygon).contains_points(indices)
-  mask = mask.reshape(image.shape)
+  mask = mask.reshape(image_shape)
+  return mask
+
+
+def get_mask_from_polygon_skimage(image_shape, polygon):
+  """Get a mask image of pixels inside the polygon.
+
+  Args:
+    image_shape: tuple of size 2.
+    polygon: Numpy array of dimension 2 (2xN).
+  """
+  polygon = np.array(polygon)
+  vertex_row_coords = polygon[:, 1]
+  vertex_col_coords = polygon[:, 0]
+  fill_row_coords, fill_col_coords = draw.polygon(vertex_row_coords, vertex_col_coords, image_shape)
+  mask = np.zeros(image_shape, dtype=np.bool)
+  mask[fill_row_coords, fill_col_coords] = True
   return mask

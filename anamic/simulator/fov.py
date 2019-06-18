@@ -1,7 +1,6 @@
 from tqdm.auto import tqdm
 import numpy as np
 from scipy import ndimage
-from skimage import morphology
 
 from .mt_simulator import dimers_builder
 from .mt_simulator import MicrotubuleSimulator
@@ -126,16 +125,12 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
 
   # Generate the masks
   masks = []
-  for ms in mts:
-    #selected_dimers = ms.positions[(ms.positions['visible'] == True) & (ms.positions['labeled'] == True)]
-    selected_dimers = ms.positions
-    x = selected_dimers['x_proj_rotated']
-    y = selected_dimers['y_proj_rotated']
-    mask, _, _ = np.histogram2d(x, y, bins=[x_bins, y_bins])
-    mask = mask > 0
-    mask = mask.astype('uint8')
-    # Dilate mask
-    mask = morphology.dilation(mask, morphology.square(3))
+  line_thickness = image_parameters['mask_line_width']
+  mask_backend = image_parameters['mask_backend']
+  for mt in mts:
+    mask = mt.generate_mask(image.shape,
+                            line_thickness=line_thickness,
+                            backend=mask_backend)
     masks.append(mask)
   masks = np.array(masks)
 

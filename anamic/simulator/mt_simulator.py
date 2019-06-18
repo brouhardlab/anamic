@@ -235,6 +235,26 @@ class MicrotubuleSimulator():
     read_noise = np.random.normal(loc=0, scale=self.parameters['bg_std'], size=self.image.shape) * self.parameters['noise_factor']
     self.image += read_noise
 
+  def generate_mask(self, image_shape, line_thickness=4, backend='skimage'):
+    """Generate a mask assuming the MT is a straight line with a defined thickness.
+
+    Args:
+      image_shape: tuple of size 2.
+      line_thickness: int, the thickness of the line.
+
+    Returns:
+      mask: array, the image mask.
+    """
+    selected_dimers = self.positions[self.positions['visible']]
+
+    x1, x2, y1, y2 = structure.get_mt_tips(selected_dimers, coordinates_features=['y_pixel', 'x_pixel'])
+    p1 = np.array([x1, y1])
+    p2 = np.array([x2, y2])
+
+    corners = geometry.get_rectangle_from_middle_line(p1, p2, rectangle_width=line_thickness)
+    mask = geometry.get_mask_from_polygon(image_shape, corners, backend=backend)
+    return mask
+
   def calculate_snr(self):
     """Calculate the SNR of the microtubule signal on the generated image.
 
@@ -249,7 +269,7 @@ class MicrotubuleSimulator():
     p2 = np.array([x2, y2])
 
     corners = geometry.get_rectangle_from_middle_line(p1, p2, rectangle_width=self.parameters['snr_line_width'])
-    mask = geometry.get_mask_from_polygon(self.image, corners)
+    mask = geometry.get_mask_from_polygon(self.image.shape, corners)
 
     image_signal = self.image[mask]
     image_background = self.image[~mask]

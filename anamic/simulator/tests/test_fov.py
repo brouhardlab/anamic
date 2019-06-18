@@ -36,6 +36,9 @@ def test_fov():
   image_parameters['noise_factor']['values'] = [1.5]
   image_parameters['noise_factor']['prob'] = [1]
 
+  image_parameters['mask_line_width'] = 4  # pixel
+  image_parameters['mask_backend'] = 'skimage'
+
   # Per microtubule parameters.
   microtubule_parameters = {}
 

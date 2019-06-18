@@ -59,7 +59,12 @@ def test_gget_mask_from_polygon():
   image = np.random.random((512, 512))
   polygon = [[10, 24], [65, 84], [100, 264], [5, 400], [347, 42]]
 
-  mask = anamic.geometry.get_mask_from_polygon(image, polygon)
+  mask1 = anamic.geometry.get_mask_from_polygon(image.shape, polygon, backend='matplotlib')
 
-  assert image.shape == mask.shape
-  assert mask.sum() == 41976
+  assert image.shape == mask1.shape
+  assert mask1.sum() == 41976
+
+  mask2 = anamic.geometry.get_mask_from_polygon(image.shape, polygon, backend='skimage')
+
+  assert image.shape == mask2.shape
+  assert mask2.sum() == 41985
