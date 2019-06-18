@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-import tqdm
+from tqdm.auto import trange
 import pandas as pd
 from scipy.spatial.transform import Rotation
 
@@ -96,7 +96,7 @@ def get_dimer_positions(dimers, show_progress=False):
   # - a translation along the Z axis.
   # - a rotation on the Z axis
   first_row = positions[0:n_pf]
-  for i_row in tqdm.trange(1, n_rows, leave=True, disable=not show_progress):
+  for i_row in trange(1, n_rows, leave=True, disable=not show_progress):
 
     current_row = first_row.copy()
 

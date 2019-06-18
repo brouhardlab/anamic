@@ -301,10 +301,11 @@ class MicrotubuleSimulator():
                                   x_offset=x_offset)
     return fig
 
-  def show_positions(self, color_feature_name='pf', size=0.4):
+  def show_positions(self, color_feature_name='pf', size=0.4, backend='ipv'):
     # Show 3D position
     return viz.viz_dimer_positions(self.positions, size=size,
-                                   color_feature_name=color_feature_name)
+                                   color_feature_name=color_feature_name,
+                                   backend=backend)
 
   def show_psf(self):
     _, ax = plt.subplots(figsize=(5, 5))
