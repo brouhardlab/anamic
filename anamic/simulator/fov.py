@@ -3,8 +3,8 @@ import numpy as np
 from scipy import ndimage
 from skimage import morphology
 
-from . import dimers_builder
-from . import MicrotubuleSimulator
+from .mt_simulator import dimers_builder
+from .mt_simulator import MicrotubuleSimulator
 
 
 def pick_value(values, prob=None):
