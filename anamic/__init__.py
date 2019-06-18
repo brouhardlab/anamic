@@ -1,7 +1,7 @@
 from pathlib import Path
 import logging
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 from . import simulator
 from . import imaging
