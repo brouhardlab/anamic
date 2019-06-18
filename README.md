@@ -42,6 +42,7 @@ Under BSD license. See [LICENSE](LICENSE).
 
 ## Release a new version
 
+- Run tests: `pytest -v anamic/`.
 - Install [rever](https://regro.github.io/rever-docs): `conda install -y rever`.
 - Run check: `rever check`.
 - Bump and release new version: `rever VERSION_NUMBER`.
