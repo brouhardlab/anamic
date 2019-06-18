@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 
 setup(name="anamic",
-      version='0.2.1',
+      version='0.2.2',
       author='Hadrien Mary',
       author_email='hadrien.mary@gmail.com',
       url='https://github.com/hadim/anamic/',
