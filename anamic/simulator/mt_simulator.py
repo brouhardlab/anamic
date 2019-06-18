@@ -37,7 +37,7 @@ class MicrotubuleSimulator():
 
   long_dimer_distance = 8  # nm
 
-  enable_cached_positions = False
+  enable_cached_positions = True
   cached_positions = {}
 
   def __init__(self, dimers):

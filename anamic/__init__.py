@@ -8,7 +8,6 @@ from . import imaging
 from . import utils
 from . import geometry
 from . import fitter
-from . import fov
 from . import viz
 
 
