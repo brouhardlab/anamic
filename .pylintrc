@@ -43,7 +43,7 @@ enable=all
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=missing-docstring,logging-fstring-interpolation,locally-disabled,suppressed-message,useless-suppression,no-self-use,consider-iterating-dictionary,no-member,unnecessary-lambda,invalid-unary-operand-type
+disable=missing-docstring,logging-fstring-interpolation,locally-disabled,suppressed-message,useless-suppression,no-self-use,consider-iterating-dictionary,no-member,unnecessary-lambda,invalid-unary-operand-type,multiple-statements
 
 # Set the cache size for astng objects.
 cache-size=500
