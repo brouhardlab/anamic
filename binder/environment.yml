@@ -13,8 +13,11 @@ dependencies:
     - notebook
     - ipywidgets
     - tifffile
+    - k3d
+    - ipyvolume
     - pyyaml
     - ipyvolume
+    - read-roi
     - tqdm
     - nodejs
     - joblib

@@ -9,9 +9,17 @@ Simulate, fit and analyze microtubules.
 
 ## Dependencies
 
-- python > 3.6 (please stop using Python 2!)
+- python > 3.6 (stop using Python 2!)
 
 ## Install
+
+We suggest you to install Python from the [Anaconda distribution](https://www.anaconda.com/distribution/). Then you can install the required dependencies in a Conda environment:
+
+```bash
+conda create -n anamic_env
+conda activate anamic_env
+conda env update -f binder/environment.yml
+```
 
 The best way is to clone the repository:
 
