@@ -13,29 +13,26 @@ Simulate, fit and analyze microtubules.
 
 ## Install
 
-We suggest you to install Python from the [Anaconda distribution](https://www.anaconda.com/distribution/). Then you can install the required dependencies in a Conda environment:
-
-```bash
-conda create -n anamic_env
-conda activate anamic_env
-conda env update -f binder/environment.yml
-```
-
-The best way is to clone the repository:
+Clone the repository:
 
 ```bash
 git clone https://github.com/brouhardlab/anamic.git
 ```
 
-or to use as a library with `pip` (the notebooks won't be available):
+We suggest you to install Python from the [Anaconda distribution](https://www.anaconda.com/distribution/). Then you can install the required dependencies in a Conda environment:
+
+```bash
+cd anamic/
+conda create -n anamic_env
+conda activate anamic_env
+conda env update -f binder/environment.yml
+```
+
+Note that anamic is also a valid Python library with `pip`:
 
 ```bash
 pip install anamic
-```
-
-or to get the latest version:
-
-```bash
+# or
 pip install https://github.com/brouhardlab/anamic/archive/master.zip
 ```
 
