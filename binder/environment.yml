@@ -13,6 +13,9 @@ dependencies:
     - notebook
     - ipywidgets
     - tifffile
+    - imageio
+    - imageio-ffmpeg
+    - ffmpeg
     - k3d
     - ipyvolume
     - pyyaml
