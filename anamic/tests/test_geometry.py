@@ -20,11 +20,9 @@ def test_discretize_line():
     spacing = 0.3
 
     line = anamic.geometry.discretize_line(line, spacing)
-    true_line = np.array([[0, 0],
-                          [0.21213203, 0.21213203],
-                          [0.42426407, 0.42426407],
-                          [0.6363961, 0.6363961],
-                          [1, 1]])
+    true_line = np.array(
+        [[0, 0], [0.21213203, 0.21213203], [0.42426407, 0.42426407], [0.6363961, 0.6363961], [1, 1]]
+    )
 
     npt.assert_almost_equal(line, true_line)
 
@@ -36,8 +34,18 @@ def test_get_normal_points():
 
     points = anamic.geometry.get_normal_points(vec, point, distance)
 
-    true_points = np.array([4.98284135, 50.09284135, 4.91171904, 14.43171904,
-                            15.03715865, 60.14715865, 0.96828096, 10.48828096])
+    true_points = np.array(
+        [
+            4.98284135,
+            50.09284135,
+            4.91171904,
+            14.43171904,
+            15.03715865,
+            60.14715865,
+            0.96828096,
+            10.48828096,
+        ]
+    )
 
     npt.assert_almost_equal(points.flatten(), true_points)
 
@@ -47,11 +55,20 @@ def test_get_rectangle_from_middle_line():
     p2 = [1, 1]
     rectangle_width = 2
 
-    corners = anamic.geometry.get_rectangle_from_middle_line(
-        p1, p2, rectangle_width)
+    corners = anamic.geometry.get_rectangle_from_middle_line(p1, p2, rectangle_width)
 
-    true_corners = np.array([-0.70710678, 0.70710678, 0.70710678, -0.70710678, 1.70710678,
-                             0.29289322, 0.29289322, 1.70710678])
+    true_corners = np.array(
+        [
+            -0.70710678,
+            0.70710678,
+            0.70710678,
+            -0.70710678,
+            1.70710678,
+            0.29289322,
+            0.29289322,
+            1.70710678,
+        ]
+    )
 
     npt.assert_almost_equal(corners.flatten(), true_corners)
 
@@ -60,14 +77,12 @@ def test_gget_mask_from_polygon():
     image = np.random.random((512, 512))
     polygon = [[10, 24], [65, 84], [100, 264], [5, 400], [347, 42]]
 
-    mask1 = anamic.geometry.get_mask_from_polygon(
-        image.shape, polygon, backend='matplotlib')
+    mask1 = anamic.geometry.get_mask_from_polygon(image.shape, polygon, backend="matplotlib")
 
     assert image.shape == mask1.shape
     assert mask1.sum() == 41976
 
-    mask2 = anamic.geometry.get_mask_from_polygon(
-        image.shape, polygon, backend='skimage')
+    mask2 = anamic.geometry.get_mask_from_polygon(image.shape, polygon, backend="skimage")
 
     assert image.shape == mask2.shape
     assert mask2.sum() == 41985

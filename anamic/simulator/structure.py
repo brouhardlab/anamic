@@ -9,8 +9,8 @@ DATA_DIR = Path(__file__).parents[1] / "data"
 
 
 def get_structure_parameters():
-    struct = pd.read_csv(DATA_DIR / 'mt_structure.csv')
-    struct = struct.set_index('n_pf', drop=True)
+    struct = pd.read_csv(DATA_DIR / "mt_structure.csv")
+    struct = struct.set_index("n_pf", drop=True)
     return struct
 
 
@@ -51,18 +51,17 @@ def get_dimer_positions(dimers, show_progress=False):
 
     # The dimer_factor is needed because we calculate theta from
     # dimer's center to dimer's center (not from monomer center).
-    dimer_factor = 2/3
+    dimer_factor = 2 / 3
 
     # Calculate the theta angle (TODO: needs a better description)
-    theta = (360 - n_pf * params['hrot']) * dimer_factor
+    theta = (360 - n_pf * params["hrot"]) * dimer_factor
 
     # Calculate the skew angle, the angle from one row to the next.
-    skew_angle = -1 * np.arcsin(0.25 * mt_radius *
-                                np.sin(0.5 * np.deg2rad(theta)))
+    skew_angle = -1 * np.arcsin(0.25 * mt_radius * np.sin(0.5 * np.deg2rad(theta)))
 
     # Init the list of positions
-    #positions = pd.DataFrame()
-    columns = ['row', 'pf', 'x', 'y', 'z', 'visible']
+    # positions = pd.DataFrame()
+    columns = ["row", "pf", "x", "y", "z", "visible"]
     n_columns = len(columns)
     positions = np.zeros((n_rows * n_pf, n_columns))
 
@@ -78,11 +77,9 @@ def get_dimer_positions(dimers, show_progress=False):
         positions[i_pf, 1] = i_pf
 
         # Spatial coordinates (x, y, z)
-        positions[i_pf, 2] = mt_radius * \
-            np.sin(i_pf * np.deg2rad(params['hrot']))
-        positions[i_pf, 3] = mt_radius * \
-            np.cos(i_pf * np.deg2rad(params['hrot']))
-        positions[i_pf, 4] = i_pf * params['htrans']
+        positions[i_pf, 2] = mt_radius * np.sin(i_pf * np.deg2rad(params["hrot"]))
+        positions[i_pf, 3] = mt_radius * np.cos(i_pf * np.deg2rad(params["hrot"]))
+        positions[i_pf, 4] = i_pf * params["htrans"]
 
         # Is the dimer visible ?
         positions[i_pf, 5] = dimers[i_pf, i_row] == 1
@@ -111,7 +108,7 @@ def get_dimer_positions(dimers, show_progress=False):
 
         # Apply rotation
         rotation = rotations[i_row - 1]
-        rot_z = Rotation.from_euler('z', rotation, degrees=False)
+        rot_z = Rotation.from_euler("z", rotation, degrees=False)
         current_row[:, 2:5] = rot_z.apply(current_row[:, 2:5])
 
         # Set dimer's visiblity
@@ -119,20 +116,20 @@ def get_dimer_positions(dimers, show_progress=False):
 
         # Add new row's dimer positions to dataframe.
         array_index = i_row * n_pf
-        positions[array_index:array_index + n_pf] = current_row
+        positions[array_index : array_index + n_pf] = current_row
 
     positions = pd.DataFrame(positions, columns=columns)
-    positions['visible'] = positions['visible'].astype('bool')
+    positions["visible"] = positions["visible"].astype("bool")
     return positions
 
 
 def get_mt_tips(positions, coordinates_features=None):
 
     if coordinates_features is None:
-        coordinates_features = ['x_pixel', 'y_pixel']
+        coordinates_features = ["x_pixel", "y_pixel"]
 
     # Get the position of the start and end of the microtubule
-    indexed_positions = positions.set_index('row')
+    indexed_positions = positions.set_index("row")
     indices = np.sort(indexed_positions.index.unique())
 
     first_dimers = indexed_positions.loc[indices[0], coordinates_features]

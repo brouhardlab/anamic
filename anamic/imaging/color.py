@@ -36,15 +36,15 @@ def create_composite(images, colors):
 
 def get_palettes():
     palettes = {}
-    palettes['grey'] = bk.palettes.Greys256
-    palettes['inferno'] = bk.palettes.Inferno256
-    palettes['magma'] = bk.palettes.Magma256
-    palettes['plasma'] = bk.palettes.Plasma256
-    palettes['viridis'] = bk.palettes.Viridis256
-    palettes['cividis'] = bk.palettes.Cividis256
-    palettes['fire'] = cc.fire
-    palettes['rainbow'] = cc.rainbow
-    palettes['red'] = cc.kr
-    palettes['green'] = cc.kg
-    palettes['blue'] = cc.kb
+    palettes["grey"] = bk.palettes.Greys256
+    palettes["inferno"] = bk.palettes.Inferno256
+    palettes["magma"] = bk.palettes.Magma256
+    palettes["plasma"] = bk.palettes.Plasma256
+    palettes["viridis"] = bk.palettes.Viridis256
+    palettes["cividis"] = bk.palettes.Cividis256
+    palettes["fire"] = cc.fire
+    palettes["rainbow"] = cc.rainbow
+    palettes["red"] = cc.kr
+    palettes["green"] = cc.kg
+    palettes["blue"] = cc.kb
     return palettes

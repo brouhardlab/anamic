@@ -109,7 +109,7 @@ def get_rectangle_from_middle_line(p1, p2, rectangle_width):
     return corners
 
 
-def get_mask_from_polygon(image_shape, polygon, backend='skimage'):
+def get_mask_from_polygon(image_shape, polygon, backend="skimage"):
     """Get a mask image of pixels inside the polygon.
 
     Args:
@@ -118,9 +118,9 @@ def get_mask_from_polygon(image_shape, polygon, backend='skimage'):
       backend: str, matplotlib or skimage.
     """
     # pylint: disable=no-else-return
-    if backend == 'matplotlib':
+    if backend == "matplotlib":
         return get_mask_from_polygon_mpl(image_shape, polygon)
-    elif backend == 'skimage':
+    elif backend == "skimage":
         return get_mask_from_polygon_skimage(image_shape, polygon)
     return None
 
@@ -152,7 +152,8 @@ def get_mask_from_polygon_skimage(image_shape, polygon):
     vertex_row_coords = polygon[:, 1]
     vertex_col_coords = polygon[:, 0]
     fill_row_coords, fill_col_coords = draw.polygon(
-        vertex_row_coords, vertex_col_coords, image_shape)
+        vertex_row_coords, vertex_col_coords, image_shape
+    )
     mask = np.zeros(image_shape, dtype=np.bool)
     mask[fill_row_coords, fill_col_coords] = True
     return mask

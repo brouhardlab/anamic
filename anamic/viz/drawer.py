@@ -5,37 +5,37 @@ import bokeh as bk
 
 def get_markers():
     markers = {}
-    markers['asterisk'] = bk.models.markers.Asterisk
-    markers['circle'] = bk.models.markers.Circle
-    markers['circleCross'] = bk.models.markers.CircleCross
-    markers['circleX'] = bk.models.markers.CircleX
-    markers['cross'] = bk.models.markers.Cross
-    markers['cash'] = bk.models.markers.Dash
-    markers['diamond'] = bk.models.markers.Diamond
-    markers['diamondCross'] = bk.models.markers.DiamondCross
-    markers['hex'] = bk.models.markers.Hex
-    markers['invertedTriangle'] = bk.models.markers.InvertedTriangle
-    markers['square'] = bk.models.markers.Square
-    markers['squareCross'] = bk.models.markers.SquareCross
-    markers['squareX'] = bk.models.markers.SquareX
-    markers['riangle'] = bk.models.markers.Triangle
-    markers['x'] = bk.models.markers.X
+    markers["asterisk"] = bk.models.markers.Asterisk
+    markers["circle"] = bk.models.markers.Circle
+    markers["circleCross"] = bk.models.markers.CircleCross
+    markers["circleX"] = bk.models.markers.CircleX
+    markers["cross"] = bk.models.markers.Cross
+    markers["cash"] = bk.models.markers.Dash
+    markers["diamond"] = bk.models.markers.Diamond
+    markers["diamondCross"] = bk.models.markers.DiamondCross
+    markers["hex"] = bk.models.markers.Hex
+    markers["invertedTriangle"] = bk.models.markers.InvertedTriangle
+    markers["square"] = bk.models.markers.Square
+    markers["squareCross"] = bk.models.markers.SquareCross
+    markers["squareX"] = bk.models.markers.SquareX
+    markers["riangle"] = bk.models.markers.Triangle
+    markers["x"] = bk.models.markers.X
     return markers
 
 
 def get_default_values(name):
 
     default_values = {}
-    default_values['line_alpha'] = 1
-    default_values['line_color'] = 'black'
-    default_values['line_width'] = 1
+    default_values["line_alpha"] = 1
+    default_values["line_color"] = "black"
+    default_values["line_width"] = 1
 
-    default_values['fill_alpha'] = 1
-    default_values['fill_color'] = 'black'
+    default_values["fill_alpha"] = 1
+    default_values["fill_color"] = "black"
 
-    default_values['size'] = 10
-    default_values['radius'] = None
-    default_values['angle'] = 0
+    default_values["size"] = 10
+    default_values["radius"] = None
+    default_values["angle"] = 0
 
     if name not in default_values.keys():
         return None
@@ -64,9 +64,9 @@ class ObjectDrawer(param.Parameterized):
         self.hover_tool = None
 
         self.cursor = {}
-        self.cursor['time_index'] = 0
-        self.cursor['channel_index'] = 0
-        self.cursor['z_index'] = 0
+        self.cursor["time_index"] = 0
+        self.cursor["channel_index"] = 0
+        self.cursor["z_index"] = 0
 
         self._init_glyph()
 
@@ -97,10 +97,9 @@ class ObjectDrawer(param.Parameterized):
         if self.hover_tool and self.hover_tool in self.fig.tools:
             self.fig.tools.remove(self.hover_tool)
 
-        tooltips = [('x', '@x'), ('y', '@y')]
+        tooltips = [("x", "@x"), ("y", "@y")]
         renderers = list(self.renderers.values())
-        self.hover_tool = bk.models.tools.HoverTool(
-            tooltips=tooltips, renderers=renderers)
+        self.hover_tool = bk.models.tools.HoverTool(tooltips=tooltips, renderers=renderers)
         self.fig.add_tools(self.hover_tool)
 
     def _clear_columns(self, data):
@@ -108,10 +107,9 @@ class ObjectDrawer(param.Parameterized):
         Bokeh glyph.
         """
         if not isinstance(data, pd.DataFrame):
-            raise TypeError(
-                f"`data` needs to be a Pandas DataFrame not: {type(data)}")
+            raise TypeError(f"`data` needs to be a Pandas DataFrame not: {type(data)}")
 
-        to_remove = ['time_index', 'channel_index', 'z_index']
+        to_remove = ["time_index", "channel_index", "z_index"]
         to_keep = []
         for name in data.columns:
             if name not in to_remove:
@@ -121,9 +119,8 @@ class ObjectDrawer(param.Parameterized):
     def draw(self):
         self.draw_markers()
 
-    def add_markers(self, datum, marker='circle', log=True):
-        self.data[marker] = pd.concat(
-            [self.data[marker], datum], ignore_index=True, sort=False)
+    def add_markers(self, datum, marker="circle", log=True):
+        self.data[marker] = pd.concat([self.data[marker], datum], ignore_index=True, sort=False)
 
         source = self.renderers[marker].data_source
 
@@ -158,8 +155,7 @@ class ObjectDrawer(param.Parameterized):
         self.draw_markers()
 
         if datum.shape[0] > 0 and log:
-            self.log.info(
-                f'{datum.shape[0]} marker(s) of type "{marker}" have been added.')
+            self.log.info(f'{datum.shape[0]} marker(s) of type "{marker}" have been added.')
 
     def draw_markers(self):
         """Draw markers for the current cursor."""
@@ -174,8 +170,7 @@ class ObjectDrawer(param.Parameterized):
                 # Don't filter if cursor is set to None.
                 if axis_name in datum.columns and idx is not None:
                     # Keep data equals to current index and data set to None.
-                    mask = (data_view[axis_name] == idx) | (
-                        pd.isnull(data_view[axis_name]))
+                    mask = (data_view[axis_name] == idx) | (pd.isnull(data_view[axis_name]))
                     data_view = data_view[mask]
 
             # Replace the indices of the filter for the markers to draw.
@@ -183,7 +178,7 @@ class ObjectDrawer(param.Parameterized):
             renderer.view.filters[0] = index_filter
 
         try:
-            self.fig_pane.param.trigger('object')
+            self.fig_pane.param.trigger("object")
         except KeyError:
             pass
 
@@ -217,12 +212,11 @@ class ObjectDrawer(param.Parameterized):
         self.fig_pane = fig_pane
         new_renderers = {}
         for name, renderer in self.renderers.items():
-            renderer = self.fig.add_glyph(
-                renderer.data_source, renderer.glyph, view=renderer.view)
+            renderer = self.fig.add_glyph(renderer.data_source, renderer.glyph, view=renderer.view)
             new_renderers[name] = renderer
         self.renderers = new_renderers
 
     def panel(self):
-        source = self.renderers['circle'].data_source
+        source = self.renderers["circle"].data_source
         table_widget = bk.models.widgets.DataTable(source=source)
         return table_widget

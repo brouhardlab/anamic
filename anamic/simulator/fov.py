@@ -10,11 +10,11 @@ def pick_value(values, prob=None):
     # pylint: disable=no-else-return
     if isinstance(prob, list):
         return np.random.choice(values, p=prob)
-    elif prob == 'poisson':
+    elif prob == "poisson":
         return np.random.poisson(**values)
-    elif prob == 'normal':
+    elif prob == "normal":
         return np.random.normal(**values)
-    elif prob == 'uniform':
+    elif prob == "uniform":
         return np.random.choice(values)
     elif prob is None:
         return values
@@ -32,7 +32,7 @@ def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters)
 
         for k, v in floating_parameters.items():
             value = pick_value(**v)
-            if k == 'taper_length_nm':
+            if k == "taper_length_nm":
                 value = max(10, value)
             args[k] = value
 
@@ -41,7 +41,9 @@ def sample_parameters(n_microtubules_to_sample, parameters, floating_parameters)
 
 
 # pylint: disable=too-many-locals,too-many-statements
-def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_parameters, return_positions=False):
+def create_fov(
+    image_size_pixel, pixel_size, microtubule_parameters, image_parameters, return_positions=False
+):
     """
     Args:
         parameters_list:
@@ -51,12 +53,12 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
     image_size_nm = int(image_size_pixel * pixel_size)
 
     # Choose parameters
-    n_mt = pick_value(**image_parameters['n_mt'])
-    signal_mean = pick_value(**image_parameters['signal_mean'])
+    n_mt = pick_value(**image_parameters["n_mt"])
+    signal_mean = pick_value(**image_parameters["signal_mean"])
     # signal_std = pick_value(**image_parameters['signal_std'])
-    bg_mean = pick_value(**image_parameters['bg_mean'])
-    bg_std = pick_value(**image_parameters['bg_std'])
-    noise_factor = pick_value(**image_parameters['noise_factor'])
+    bg_mean = pick_value(**image_parameters["bg_mean"])
+    bg_std = pick_value(**image_parameters["bg_std"])
+    noise_factor = pick_value(**image_parameters["noise_factor"])
 
     params_list = []
     for _ in range(n_mt):
@@ -73,11 +75,9 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
     for params in tqdm(params_list, total=len(params_list), leave=True):
 
         # Taper length cannot be bigger than half the length of a microtubule.
-        params['taper_length_nm'] = min(
-            0.5 * params['mt_length_nm'], params['taper_length_nm'])
+        params["taper_length_nm"] = min(0.5 * params["mt_length_nm"], params["taper_length_nm"])
 
-        dimers = dimers_builder(
-            params['n_pf'], params['mt_length_nm'], params['taper_length_nm'])
+        dimers = dimers_builder(params["n_pf"], params["mt_length_nm"], params["taper_length_nm"])
         ms = MicrotubuleSimulator(dimers)
         ms.parameters.update(params)
         ms.build_positions(apply_random_z_rotation=True, show_progress=False)
@@ -91,24 +91,23 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
     y_centers = np.random.randint(0, image_size_nm + 1, n_mt)
     centers = np.array([x_centers, y_centers]).T
     for ms, center in zip(mts, centers):
-        ms.positions[['x_proj_rotated', 'y_proj_rotated']] += center
-        ms.positions[['x_pixel', 'y_pixel']] = ms.positions[[
-            'x_proj_rotated', 'y_proj_rotated']] / pixel_size
+        ms.positions[["x_proj_rotated", "y_proj_rotated"]] += center
+        ms.positions[["x_pixel", "y_pixel"]] = (
+            ms.positions[["x_proj_rotated", "y_proj_rotated"]] / pixel_size
+        )
 
     # Discretize all the dimer's positions
     x = []
     y = []
     for ms in mts:
-        selected_dimers = ms.positions[(
-            ms.positions['visible']) & (ms.positions['labeled'])]
-        x += selected_dimers['x_proj_rotated'].tolist()
-        y += selected_dimers['y_proj_rotated'].tolist()
+        selected_dimers = ms.positions[(ms.positions["visible"]) & (ms.positions["labeled"])]
+        x += selected_dimers["x_proj_rotated"].tolist()
+        y += selected_dimers["y_proj_rotated"].tolist()
     dimers = np.array([x, y])
 
     x_bins = np.arange(0, image_size_nm + 1, pixel_size)
     y_bins = np.arange(0, image_size_nm + 1, pixel_size)
-    discrete_image, _, _ = np.histogram2d(
-        dimers[0], dimers[1], bins=[x_bins, y_bins])
+    discrete_image, _, _ = np.histogram2d(dimers[0], dimers[1], bins=[x_bins, y_bins])
 
     # Convolve and generate the FOV
     # All mt objects are supposed to have the same PSF
@@ -125,18 +124,15 @@ def create_fov(image_size_pixel, pixel_size, microtubule_parameters, image_param
     image = image * (signal_mean - bg_mean) + bg_mean
 
     # Create read noise
-    read_noise = np.random.normal(
-        loc=0, scale=bg_std, size=image.shape) * noise_factor
+    read_noise = np.random.normal(loc=0, scale=bg_std, size=image.shape) * noise_factor
     image += read_noise
 
     # Generate the masks
     masks = []
-    line_thickness = image_parameters['mask_line_width']
-    mask_backend = image_parameters['mask_backend']
+    line_thickness = image_parameters["mask_line_width"]
+    mask_backend = image_parameters["mask_backend"]
     for mt in mts:
-        mask = mt.generate_mask(image.shape,
-                                line_thickness=line_thickness,
-                                backend=mask_backend)
+        mask = mt.generate_mask(image.shape, line_thickness=line_thickness, backend=mask_backend)
         masks.append(mask)
     masks = np.array(masks)
 

@@ -43,22 +43,30 @@ def parallelized(fn, args, args_type, progress_bar=False, n_jobs=-1, tqdm_args=N
 
     if progress_bar:
         from tqdm.auto import tqdm
-        def progress_fn(x): return tqdm(x, **tqdm_args)
+
+        def progress_fn(x):
+            return tqdm(x, **tqdm_args)
+
     else:
-        def progress_fn(x): return x
+
+        def progress_fn(x):
+            return x
 
     parallel_fn = jb.delayed(fn)
 
-    if args_type == 'single':
+    if args_type == "single":
         executor_args = [parallel_fn(arg) for arg in args]
-    elif args_type == 'list':
+    elif args_type == "list":
         executor_args = [parallel_fn(*arg) for arg in args]
-    elif args_type == 'dict':
+    elif args_type == "dict":
         executor_args = [parallel_fn(**arg) for arg in args]
     else:
         mess = "`args_type` must be in ['single', 'list', 'dict']"
         raise ValueError(mess)
 
     executor = jb.Parallel(n_jobs=n_jobs, **joblib_args)
-    def executor_fn(x): return executor(progress_fn(x))
+
+    def executor_fn(x):
+        return executor(progress_fn(x))
+
     return executor_fn(executor_args)

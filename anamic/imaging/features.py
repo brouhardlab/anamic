@@ -10,4 +10,4 @@ def compute_snr(signal_mean, signal_std, bg_mean, bg_std):
         bg_mean: float, mean background value.
         bg_std: float, std background value.
     """
-    return (signal_mean - bg_mean) / np.sqrt(signal_std**2 + bg_std**2)
+    return (signal_mean - bg_mean) / np.sqrt(signal_std ** 2 + bg_std ** 2)

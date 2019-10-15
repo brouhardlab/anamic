@@ -41,8 +41,7 @@ def reorder_image_dimensions(image, dimension_order=None):
         image = np.expand_dims(image, axis=0)
         current_order.insert(0, missing_dim)
 
-    new_order_indices = [current_order.index(
-        dim) for dim in default_dimension_order]
+    new_order_indices = [current_order.index(dim) for dim in default_dimension_order]
     image = np.transpose(image, axes=new_order_indices)
 
     return image

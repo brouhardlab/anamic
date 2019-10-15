@@ -36,8 +36,7 @@ def get_thick_line(point1, point2, length_spacing=1, line_thickness=0, width_spa
         # at the distance defined by `line_thickness`.
         normal_distance = line_thickness / 2
         vec = points[-1] - points[0]
-        normal_points = geometry.get_normal_points(
-            vec, points, normal_distance)
+        normal_points = geometry.get_normal_points(vec, points, normal_distance)
 
         lines = []
         # Iterate over the length of the initial line.
@@ -52,12 +51,16 @@ def get_thick_line(point1, point2, length_spacing=1, line_thickness=0, width_spa
     return lines
 
 
-def line_profile(image, point1, point2,
-                 length_spacing=0.1,
-                 line_thickness=0,
-                 width_spacing=0.1,
-                 normalized_intensities=True,
-                 threshold=None):
+def line_profile(
+    image,
+    point1,
+    point2,
+    length_spacing=0.1,
+    line_thickness=0,
+    width_spacing=0.1,
+    normalized_intensities=True,
+    threshold=None,
+):
     """Get a line profile defined by an image and two points.
 
     Args:
@@ -77,12 +80,16 @@ def line_profile(image, point1, point2,
       y_profile: array, the intensities values of the profile.
     """
 
-    lines = get_thick_line(point1, point2, length_spacing=length_spacing,
-                           line_thickness=line_thickness, width_spacing=width_spacing)
+    lines = get_thick_line(
+        point1,
+        point2,
+        length_spacing=length_spacing,
+        line_thickness=line_thickness,
+        width_spacing=width_spacing,
+    )
 
     # Get the intensity profile of the lines.
-    y_profiles = ndimage.map_coordinates(
-        image, lines.reshape(2, -1), order=1, mode='constant')
+    y_profiles = ndimage.map_coordinates(image, lines.reshape(2, -1), order=1, mode="constant")
     y_profiles = y_profiles.reshape(lines.shape[1:])
 
     # Get the mean profile
@@ -128,9 +135,9 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
     mu_stderr_threshold = fit_threshold
 
     args = {}
-    args['length_spacing'] = length_spacing  # pixel
-    args['line_thickness'] = 0
-    args['normalized_intensities'] = True
+    args["length_spacing"] = length_spacing  # pixel
+    args["line_thickness"] = 0
+    args["normalized_intensities"] = True
 
     fitted_line = []
     errors = []
@@ -140,16 +147,16 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
         x_profile, y_profile = line_profile(image, point1, point2, **args)
 
         fit_params = {}
-        fit_params['mu'] = lmfit.Parameter(
-            'mu', value=x_profile[-1] / 2, min=0, max=x_profile[-1])
-        fit_params['sigma'] = lmfit.Parameter(
-            'sigma', value=100, vary=True, min=0, max=x_profile[-1])
-        fit_params['mt'] = lmfit.Parameter('mt', value=50, vary=True, min=0)
-        fit_params['bg'] = lmfit.Parameter('bg', value=50, vary=True, min=0)
+        fit_params["mu"] = lmfit.Parameter("mu", value=x_profile[-1] / 2, min=0, max=x_profile[-1])
+        fit_params["sigma"] = lmfit.Parameter(
+            "sigma", value=100, vary=True, min=0, max=x_profile[-1]
+        )
+        fit_params["mt"] = lmfit.Parameter("mt", value=50, vary=True, min=0)
+        fit_params["bg"] = lmfit.Parameter("bg", value=50, vary=True, min=0)
         fit_result = model.fit(y_profile, x=x_profile, **fit_params)
 
         # Distance between point 1 and the fitted center
-        d = fit_result.best_values['mu']
+        d = fit_result.best_values["mu"]
         vec = point2 - point1
 
         # Get the point at a certain distance d from point1
@@ -157,10 +164,10 @@ def perpendicular_line_fit(lines, image, length_spacing, fit_threshold, continuo
         fitted_line.append(line_center)
 
         # When error is None then we set its value to infinity.
-        if not fit_result.params['mu'].stderr:
+        if not fit_result.params["mu"].stderr:
             errors.append(np.inf)
         else:
-            errors.append(fit_result.params['mu'].stderr)
+            errors.append(fit_result.params["mu"].stderr)
 
     fitted_line = np.array(fitted_line)
     errors = np.array(errors)
@@ -188,13 +195,12 @@ def tip_line_fit(point1, point2, image, length_spacing, line_thickness, width_sp
     """
 
     profile_parameters = {}
-    profile_parameters['length_spacing'] = length_spacing  # pixel
-    profile_parameters['line_thickness'] = line_thickness  # pixel
-    profile_parameters['width_spacing'] = width_spacing  # pixel
-    profile_parameters['normalized_intensities'] = True
+    profile_parameters["length_spacing"] = length_spacing  # pixel
+    profile_parameters["line_thickness"] = line_thickness  # pixel
+    profile_parameters["width_spacing"] = width_spacing  # pixel
+    profile_parameters["normalized_intensities"] = True
 
-    x_profile, y_profile = line_profile(
-        image, point1, point2, **profile_parameters)
+    x_profile, y_profile = line_profile(image, point1, point2, **profile_parameters)
 
     def errorfunction(x, mu, sigma, mt, bg):
         # pylint: disable=no-member
@@ -203,19 +209,25 @@ def tip_line_fit(point1, point2, image, length_spacing, line_thickness, width_sp
     model = lmfit.Model(errorfunction)
 
     fit_params = {}
-    fit_params['mu'] = lmfit.Parameter(
-        'mu', value=x_profile[-1] / 2, min=0, max=x_profile[-1])
-    fit_params['sigma'] = lmfit.Parameter(
-        'sigma', value=1, vary=True, min=0, max=x_profile[-1])
-    fit_params['mt'] = lmfit.Parameter('mt', value=1, vary=True, min=0)
-    fit_params['bg'] = lmfit.Parameter('bg', value=1, vary=True, min=0)
+    fit_params["mu"] = lmfit.Parameter("mu", value=x_profile[-1] / 2, min=0, max=x_profile[-1])
+    fit_params["sigma"] = lmfit.Parameter("sigma", value=1, vary=True, min=0, max=x_profile[-1])
+    fit_params["mt"] = lmfit.Parameter("mt", value=1, vary=True, min=0)
+    fit_params["bg"] = lmfit.Parameter("bg", value=1, vary=True, min=0)
     fit_result = model.fit(y_profile.copy(), x=x_profile.copy(), **fit_params)
 
     return x_profile, y_profile, fit_result, errorfunction
 
 
-def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpendicular_line_fit_args,
-                           offset_start, offset_end, tip_fit_args):
+def microtubule_tip_fitter(
+    tip_start,
+    tip_end,
+    image,
+    get_thick_line_args,
+    perpendicular_line_fit_args,
+    offset_start,
+    offset_end,
+    tip_fit_args,
+):
     """
     Args:
       tip_start:
@@ -229,8 +241,7 @@ def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpe
     """
     lines = get_thick_line(tip_start, tip_end, **get_thick_line_args)
 
-    fitted_line = perpendicular_line_fit(
-        lines, image, **perpendicular_line_fit_args)
+    fitted_line = perpendicular_line_fit(lines, image, **perpendicular_line_fit_args)
 
     # Now we fit the best line from those points
     a, b = np.polyfit(fitted_line[:, 1], fitted_line[:, 0], deg=1)
@@ -244,12 +255,10 @@ def microtubule_tip_fitter(tip_start, tip_end, image, get_thick_line_args, perpe
 
     # Get the coordinates of the points we'll use
     # to for line fitting.
-    start_point = geometry.get_point_from_vector(
-        -vec, new_point2, offset_start)
+    start_point = geometry.get_point_from_vector(-vec, new_point2, offset_start)
     end_point = geometry.get_point_from_vector(vec, new_point2, offset_end)
     line_fit_tips = np.array([start_point, end_point])
 
     # Fit the tip
-    tip_line_fit_results = tip_line_fit(
-        line_fit_tips[0], line_fit_tips[1], image, **tip_fit_args)
+    tip_line_fit_results = tip_line_fit(line_fit_tips[0], line_fit_tips[1], image, **tip_fit_args)
     return [line_fit_tips] + list(tip_line_fit_results)

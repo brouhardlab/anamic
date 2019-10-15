@@ -13,9 +13,9 @@ def viz_dimer_positions_ipv(positions, size=5, cmap_name="tab20c", color_feature
         raise ImportError(mess)
 
     # Only show visible dimers
-    selected_dimers = positions[positions['visible']]
+    selected_dimers = positions[positions["visible"]]
 
-    x, y, z = selected_dimers[['x', 'y', 'z']].values.astype('float').T
+    x, y, z = selected_dimers[["x", "y", "z"]].values.astype("float").T
 
     if color_feature_name:
         # TODO: that code should be much simpler...
@@ -28,10 +28,10 @@ def viz_dimer_positions_ipv(positions, size=5, cmap_name="tab20c", color_feature
             mask = selected_dimers[color_feature_name] == categories[color_index]
             color[mask] = color_indices[color_index]
     else:
-        color = '#e4191b'
+        color = "#e4191b"
 
     ipv.figure(height=800, width=1000)
-    ipv.scatter(x, y, z, size=size, marker='sphere', color=color)
+    ipv.scatter(x, y, z, size=size, marker="sphere", color=color)
     ipv.squarelim()
     ipv.show()
 
@@ -41,13 +41,15 @@ def viz_dimer_positions_k3d(positions, size=5, cmap_name="tab20c", color_feature
         import k3d
     except ImportError:
         mess = "YOu need to install the k3d library. "
-        mess += "Please follow the official instructions at https://github.com/K3D-tools/K3D-jupyter/."
+        mess += (
+            "Please follow the official instructions at https://github.com/K3D-tools/K3D-jupyter/."
+        )
         raise ImportError(mess)
 
     # Only show visible dimers
-    selected_dimers = positions[positions['visible']]
+    selected_dimers = positions[positions["visible"]]
 
-    coordinates = selected_dimers[['x', 'y', 'z']].values.astype('float')
+    coordinates = selected_dimers[["x", "y", "z"]].values.astype("float")
     coordinates = coordinates.astype("float32")
 
     if color_feature_name:
@@ -56,29 +58,28 @@ def viz_dimer_positions_k3d(positions, size=5, cmap_name="tab20c", color_feature
         categories = selected_dimers[color_feature_name].unique()
         color_indices = cmap([i / len(categories) for i in categories])
 
-        colors = np.zeros(
-            (len(selected_dimers[color_feature_name]),), dtype="uint32")
+        colors = np.zeros((len(selected_dimers[color_feature_name]),), dtype="uint32")
         for color_index, _ in enumerate(categories):
             mask = selected_dimers[color_feature_name] == categories[color_index]
             color = color_indices[color_index]
-            color = "".join([format(int(x * 255), '02X') for x in color[:-1]])
+            color = "".join([format(int(x * 255), "02X") for x in color[:-1]])
             color = int(color, 16)
             colors[mask] = color
     else:
-        colors = '#e4191b'
+        colors = "#e4191b"
 
     plot = k3d.plot()
 
-    plt_points = k3d.points(positions=coordinates,
-                            point_size=size, colors=colors)
+    plt_points = k3d.points(positions=coordinates, point_size=size, colors=colors)
     plot += plt_points
 
     plot.display()
     return plot
 
 
-def viz_dimer_positions(positions, size=5, cmap_name="tab20c",
-                        color_feature_name=None, backend="ipv"):
+def viz_dimer_positions(
+    positions, size=5, cmap_name="tab20c", color_feature_name=None, backend="ipv"
+):
 
     # pylint: disable=no-else-return
     if backend == "ipv":
