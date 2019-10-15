@@ -227,7 +227,7 @@ class MicrotubuleSimulator:
 
         # Save tips positions
         x1, x2, y1, y2 = structure.get_mt_tips(
-            self.positions, coordinates_features=["y_pixel", "x_pixel"]
+            self.positions[self.positions["visible"]], coordinates_features=["y_pixel", "x_pixel"]
         )
         self.parameters["tip_start"] = (y1, x1)
         self.parameters["tip_end"] = (y2, x2)
