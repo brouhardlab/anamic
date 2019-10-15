@@ -28,5 +28,4 @@ install:
 script:
   - conda activate conda_env
   - python setup.py install
-  - pylint anamic/
   - python -c "import anamic; anamic.run_all_tests()"

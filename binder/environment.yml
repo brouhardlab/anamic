@@ -31,6 +31,5 @@ dependencies:
     - panel
     - colorcet
     - pytest
-    - flake8
     - pylint
-    - autopep8
+    - black
